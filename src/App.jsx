@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import InputPanel from './InputPanel';
-import ResultsPanel from './ResultsPanel';
+import InputPanel from './InputPanel.jsx';
+import ResultsPanel from './ResultsPanel.jsx';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(false);
