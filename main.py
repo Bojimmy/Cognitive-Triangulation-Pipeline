@@ -571,7 +571,7 @@ def health_check():
 
 if __name__ == "__main__":
     print("🚀 Starting X-Agent Backend Server with Feedback Loop...")
-    print("📡 API available at http://0.0.0.0:5000")
+    print("📡 API available at http://0.0.0.0:5001")
     print("🔗 Endpoints:")
     print("   POST /api/process - Process documents with feedback loop")
     print("   GET  /api/status  - Get pipeline status")
@@ -581,4 +581,4 @@ if __name__ == "__main__":
     print("   • PM ↔ Scrum Master feedback loop (max 3 iterations)")
     print("   • Automatic scope reduction and quality improvement")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

@@ -13,7 +13,7 @@ export default function App() {
     setResultData(null);
 
     try {
-      const response = await fetch('/api/process', {
+      const response = await fetch('http://localhost:5001/api/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
