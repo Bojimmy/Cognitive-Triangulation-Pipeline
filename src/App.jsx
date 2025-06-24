@@ -50,36 +50,78 @@ export default function App() {
   );
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [canvasTransform, setCanvasTransform] = useState({ x: 0, y: 0, scale: 1 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const canvasRef = useRef(null);
 
   const handleMouseDown = useCallback((e, nodeId) => {
     e.preventDefault();
+    e.stopPropagation();
     const rect = canvasRef.current.getBoundingClientRect();
     const nodePos = nodePositions[nodeId];
+    const scaledX = (e.clientX - rect.left - canvasTransform.x) / canvasTransform.scale;
+    const scaledY = (e.clientY - rect.top - canvasTransform.y) / canvasTransform.scale;
+    
     setDragOffset({
-      x: e.clientX - rect.left - nodePos.x,
-      y: e.clientY - rect.top - nodePos.y
+      x: scaledX - nodePos.x,
+      y: scaledY - nodePos.y
     });
     setIsDragging(nodeId);
     setSelectedNode(nodeId);
-  }, [nodePositions]);
+  }, [nodePositions, canvasTransform]);
+
+  const handleCanvasMouseDown = useCallback((e) => {
+    if (isDragging) return;
+    setIsPanning(true);
+    setPanStart({
+      x: e.clientX - canvasTransform.x,
+      y: e.clientY - canvasTransform.y
+    });
+  }, [isDragging, canvasTransform]);
 
   const handleMouseMove = useCallback((e) => {
-    if (!isDragging) return;
-    
-    const rect = canvasRef.current.getBoundingClientRect();
-    const newX = e.clientX - rect.left - dragOffset.x;
-    const newY = e.clientY - rect.top - dragOffset.y;
-    
-    setNodePositions(prev => ({
-      ...prev,
-      [isDragging]: { x: Math.max(0, newX), y: Math.max(0, newY) }
-    }));
-  }, [isDragging, dragOffset]);
+    if (isDragging) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const scaledX = (e.clientX - rect.left - canvasTransform.x) / canvasTransform.scale;
+      const scaledY = (e.clientY - rect.top - canvasTransform.y) / canvasTransform.scale;
+      
+      setNodePositions(prev => ({
+        ...prev,
+        [isDragging]: { 
+          x: Math.max(0, scaledX - dragOffset.x), 
+          y: Math.max(0, scaledY - dragOffset.y) 
+        }
+      }));
+    } else if (isPanning) {
+      setCanvasTransform(prev => ({
+        ...prev,
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y
+      }));
+    }
+  }, [isDragging, isPanning, dragOffset, panStart, canvasTransform.scale]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    setIsPanning(false);
   }, []);
+
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = Math.max(0.1, Math.min(3, canvasTransform.scale * delta));
+    
+    setCanvasTransform(prev => ({
+      scale: newScale,
+      x: mouseX - (mouseX - prev.x) * (newScale / prev.scale),
+      y: mouseY - (mouseY - prev.y) * (newScale / prev.scale)
+    }));
+  }, [canvasTransform]);
 
   const getConnectionPath = (fromId, toId) => {
     const fromPos = nodePositions[fromId];
@@ -171,29 +213,20 @@ export default function App() {
         <div className="flex-1 relative overflow-hidden">
           <svg
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full cursor-grab"
+            className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing"
             style={{
               backgroundImage: `
                 radial-gradient(circle, #374151 1px, transparent 1px)
               `,
-              backgroundSize: '20px 20px'
+              backgroundSize: `${20 * canvasTransform.scale}px ${20 * canvasTransform.scale}px`,
+              backgroundPosition: `${canvasTransform.x}px ${canvasTransform.y}px`
             }}
+            onMouseDown={handleCanvasMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onWheel={handleWheel}
           >
-            {/* Connection Lines */}
-            {connections.map((conn, i) => (
-              <path
-                key={i}
-                d={getConnectionPath(conn.from, conn.to)}
-                stroke="#6b7280"
-                strokeWidth="2"
-                fill="none"
-                markerEnd="url(#arrowhead)"
-              />
-            ))}
-            
             {/* Arrow Marker */}
             <defs>
               <marker
@@ -211,45 +244,59 @@ export default function App() {
               </marker>
             </defs>
 
-            {/* Agent Nodes */}
-            {agents.map(agent => {
-              const pos = nodePositions[agent.id];
-              return (
-                <g key={agent.id}>
-                  <foreignObject
-                    x={pos.x}
-                    y={pos.y}
-                    width="120"
-                    height="80"
-                    className="cursor-move"
-                    onMouseDown={(e) => handleMouseDown(e, agent.id)}
-                  >
-                    <div className={`
-                      w-full h-full border-2 rounded-lg p-3 bg-gray-800 text-white
-                      ${selectedNode === agent.id ? 'border-blue-500' : 'border-gray-600'}
-                      hover:border-gray-500
-                    `}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className={`w-6 h-6 ${agent.color} rounded flex items-center justify-center text-sm`}>
-                          {agent.icon}
+            <g transform={`translate(${canvasTransform.x}, ${canvasTransform.y}) scale(${canvasTransform.scale})`}>
+              {/* Connection Lines */}
+              {connections.map((conn, i) => (
+                <path
+                  key={i}
+                  d={getConnectionPath(conn.from, conn.to)}
+                  stroke="#6b7280"
+                  strokeWidth="2"
+                  fill="none"
+                  markerEnd="url(#arrowhead)"
+                />
+              ))}
+
+              {/* Agent Nodes */}
+              {agents.map(agent => {
+                const pos = nodePositions[agent.id];
+                return (
+                  <g key={agent.id}>
+                    <foreignObject
+                      x={pos.x}
+                      y={pos.y}
+                      width="120"
+                      height="80"
+                      className="cursor-move"
+                      onMouseDown={(e) => handleMouseDown(e, agent.id)}
+                    >
+                      <div className={`
+                        w-full h-full border-2 rounded-lg p-3 bg-gray-800 text-white
+                        ${selectedNode === agent.id ? 'border-blue-500' : 'border-gray-600'}
+                        hover:border-gray-500
+                      `}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className={`w-6 h-6 ${agent.color} rounded flex items-center justify-center text-sm`}>
+                            {agent.icon}
+                          </div>
+                          <div className="text-xs font-medium truncate">{agent.name}</div>
                         </div>
-                        <div className="text-xs font-medium truncate">{agent.name}</div>
+                        <div className="text-xs text-gray-400">{agent.description}</div>
+                        
+                        {/* Connection Handles */}
+                        <div className="absolute -right-1 top-1/2 w-2 h-2 bg-gray-500 rounded-full transform -translate-y-1/2"></div>
+                        <div className="absolute -left-1 top-1/2 w-2 h-2 bg-gray-500 rounded-full transform -translate-y-1/2"></div>
                       </div>
-                      <div className="text-xs text-gray-400">{agent.description}</div>
-                      
-                      {/* Connection Handles */}
-                      <div className="absolute -right-1 top-1/2 w-2 h-2 bg-gray-500 rounded-full transform -translate-y-1/2"></div>
-                      <div className="absolute -left-1 top-1/2 w-2 h-2 bg-gray-500 rounded-full transform -translate-y-1/2"></div>
-                    </div>
-                  </foreignObject>
-                </g>
-              );
-            })}
+                    </foreignObject>
+                  </g>
+                );
+              })}
+            </g>
           </svg>
         </div>
 
         {/* Right Properties Panel */}
-        <div className="w-80 bg-gray-800 border-l border-gray-700 p-4">
+        <div className="w-64 bg-gray-800 border-l border-gray-700 p-4">
           {selectedAgent ? (
             <div>
               <div className="flex items-center gap-2 mb-4">
