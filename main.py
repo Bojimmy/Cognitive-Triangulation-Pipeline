@@ -67,14 +67,17 @@ class AnalystXAgent(BaseXAgent):
         content = etree.tostring(parsed_input, encoding='unicode', method='text').lower()
         
         # Enhanced domain detection with business-specific intelligence
-        if any(word in content for word in ['support', 'ticket', 'helpdesk', 'customer service', 'agent']):
+        # Fitness/Health apps (check first as they're often misclassified)
+        if any(word in content for word in ['fitness', 'workout', 'nutrition', 'health', 'wellness', 'exercise', 'trainer', 'meal', 'calorie', 'step', 'wearable', 'fitbit', 'apple watch', 'strava']):
+            domain = 'fitness_app'
+        elif any(word in content for word in ['support', 'ticket', 'helpdesk', 'customer service', 'agent']):
             domain = 'customer_support'
-        elif any(word in content for word in ['ecommerce', 'e-commerce', 'shopping', 'payment', 'cart', 'product']):
-            domain = 'ecommerce'
-        elif any(word in content for word in ['mobile', 'app', 'ios', 'android', 'smartphone']):
-            domain = 'mobile_app'
         elif any(word in content for word in ['healthcare', 'medical', 'patient', 'hospital', 'clinic', 'hipaa']):
             domain = 'healthcare'
+        elif any(word in content for word in ['mobile', 'app', 'ios', 'android', 'smartphone']) and not any(word in content for word in ['ecommerce', 'e-commerce', 'shopping', 'cart']):
+            domain = 'mobile_app'
+        elif any(word in content for word in ['ecommerce', 'e-commerce', 'shopping', 'payment', 'cart', 'product']) and not any(word in content for word in ['fitness', 'health', 'workout']):
+            domain = 'ecommerce'
         elif any(word in content for word in ['finance', 'banking', 'payment', 'financial', 'trading']):
             domain = 'fintech'
         elif any(word in content for word in ['canvas', 'visual', 'workflow', 'drag']):
@@ -174,6 +177,10 @@ class ProductManagerXAgent(BaseXAgent):
         # Domain-specific analysis for enterprise systems
         elif any(term in content_lower for term in ['enterprise', 'business', 'corporate', 'organization']):
             requirements.extend(self._extract_enterprise_requirements(content))
+        
+        # Domain-specific analysis for fitness/health applications
+        elif any(term in content_lower for term in ['fitness', 'workout', 'nutrition', 'health', 'wellness', 'exercise', 'trainer', 'meal', 'calorie']):
+            requirements.extend(self._extract_fitness_app_requirements(content))
         
         # Domain-specific analysis for mobile/web applications
         elif any(term in content_lower for term in ['mobile', 'app', 'web', 'dashboard', 'ui', 'interface']):
@@ -365,6 +372,96 @@ class ProductManagerXAgent(BaseXAgent):
         
         return requirements
     
+    def _extract_fitness_app_requirements(self, content: str) -> list:
+        """Extract fitness/health app specific requirements"""
+        requirements = []
+        content_lower = content.lower()
+        
+        # Core fitness tracking
+        if any(term in content_lower for term in ['workout', 'exercise', 'fitness', 'training']):
+            requirements.append({
+                'title': 'Comprehensive Workout Tracking and Exercise Logging System',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Nutrition tracking
+        if any(term in content_lower for term in ['nutrition', 'food', 'meal', 'calorie', 'diet', 'eating']):
+            requirements.append({
+                'title': 'Nutrition Tracking with Barcode Scanning and Food Database',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Wearable device integration
+        if any(term in content_lower for term in ['apple watch', 'fitbit', 'wearable', 'smartwatch', 'heart rate']):
+            requirements.append({
+                'title': 'Wearable Device Integration (Apple Watch, Fitbit, Heart Rate Monitors)',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Trainer/coaching features
+        if any(term in content_lower for term in ['trainer', 'coach', 'personal', 'professional', 'instructor']):
+            requirements.append({
+                'title': 'Personal Trainer Management and Coaching Platform',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Social and community features
+        if any(term in content_lower for term in ['social', 'community', 'friend', 'share', 'challenge', 'leaderboard']):
+            requirements.append({
+                'title': 'Social Features and Community Platform with Challenges',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        # Third-party integrations
+        if any(term in content_lower for term in ['strava', 'myfitnesspal', 'apple health', 'google fit', 'integration']):
+            requirements.append({
+                'title': 'Third-Party Fitness App Integration (Strava, Apple Health, Google Fit)',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        # Mobile app essentials
+        if any(term in content_lower for term in ['mobile', 'app', 'ios', 'android']):
+            requirements.append({
+                'title': 'Cross-Platform Mobile Application with Offline Sync',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Progress tracking and analytics
+        if any(term in content_lower for term in ['progress', 'goal', 'achievement', 'analytics', 'report']):
+            requirements.append({
+                'title': 'Progress Tracking and Goal Achievement Analytics',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        # Subscription/premium features
+        if any(term in content_lower for term in ['premium', 'subscription', 'tier', 'plan', 'payment']):
+            requirements.append({
+                'title': 'Subscription Management and Premium Feature Access',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        # User scaling
+        user_scale_match = re.search(r'(\d+(?:,\d+)*)\s*(?:to|-)?\s*(\d+(?:,\d+)*)\s*(?:users|customers)', content_lower)
+        if user_scale_match:
+            min_users = user_scale_match.group(1)
+            max_users = user_scale_match.group(2) if user_scale_match.group(2) else min_users
+            requirements.append({
+                'title': f'Scalable Architecture for {min_users} to {max_users} Users',
+                'priority': 'high',
+                'category': 'non-functional'
+            })
+        
+        return requirements
+    
     def _extract_application_requirements(self, content: str) -> list:
         """Extract mobile/web application specific requirements"""
         requirements = []
@@ -504,7 +601,6 @@ class ProductManagerXAgent(BaseXAgent):
         for pattern in company_patterns:
             match = re.search(pattern, content)
             if match:
-                company_info['company'] = match.group(1).strip()
                 # Filter out common false positives
                 company_name = match.group(1).strip()
                 if not any(word in company_name.lower() for word in ['user', 'customer', 'agent', 'manager', 'system', 'application']):
