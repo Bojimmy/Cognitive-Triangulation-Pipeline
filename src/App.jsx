@@ -227,12 +227,81 @@ const initialNodes = [
   {
     id: '1',
     type: 'input',
-    position: { x: 250, y: 25 },
-    data: { label: 'Input Document' },
+    position: { x: 50, y: 50 },
+    data: { label: 'Input Document', description: 'Project requirements input' },
+  },
+  {
+    id: '2',
+    type: 'analyst',
+    position: { x: 300, y: 50 },
+    data: { label: 'Document Analyst', description: 'Analyzes documents and extracts insights' },
+  },
+  {
+    id: '3',
+    type: 'productManager',
+    position: { x: 550, y: 50 },
+    data: { label: 'Product Manager', description: 'Extracts and manages requirements' },
+  },
+  {
+    id: '4',
+    type: 'taskManager',
+    position: { x: 300, y: 200 },
+    data: { label: 'Task Manager', description: 'Breaks down requirements into tasks' },
+  },
+  {
+    id: '5',
+    type: 'scrumMaster',
+    position: { x: 550, y: 200 },
+    data: { label: 'Scrum Master', description: 'Reviews and approves with feedback' },
+  },
+  {
+    id: '6',
+    type: 'output',
+    position: { x: 300, y: 350 },
+    data: { label: 'Final Output', description: 'Processed tasks and feedback' },
   },
 ];
 
-const initialEdges = [];
+const initialEdges = [
+  {
+    id: 'e1-2',
+    source: '1',
+    target: '2',
+    markerEnd: { type: MarkerType.ArrowClosed },
+  },
+  {
+    id: 'e2-3',
+    source: '2',
+    target: '3',
+    markerEnd: { type: MarkerType.ArrowClosed },
+  },
+  {
+    id: 'e3-4',
+    source: '3',
+    target: '4',
+    markerEnd: { type: MarkerType.ArrowClosed },
+  },
+  {
+    id: 'e4-5',
+    source: '4',
+    target: '5',
+    markerEnd: { type: MarkerType.ArrowClosed },
+  },
+  {
+    id: 'e5-3',
+    source: '5',
+    target: '3',
+    markerEnd: { type: MarkerType.ArrowClosed },
+    style: { stroke: '#f59e0b' },
+    label: 'feedback',
+  },
+  {
+    id: 'e5-6',
+    source: '5',
+    target: '6',
+    markerEnd: { type: MarkerType.ArrowClosed },
+  },
+];
 
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -313,7 +382,7 @@ export default function App() {
     setResultData(null);
 
     try {
-      const response = await fetch('http://0.0.0.0:5001/api/process', {
+      const response = await fetch('http://0.0.0.0:5002/api/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
