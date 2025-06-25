@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 
-const InputPanel = ({ onRunPipeline, isLoading, finalOutput }) => {
+const InputPanel = ({ onRunPipeline, isLoading, finalOutput, resultData }) => {
   const [text, setText] = useState('');
   const [mode, setMode] = useState('text'); // 'text', 'file', 'chat'
   const [chatHistory, setChatHistory] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [showChatPopup, setShowChatPopup] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [fileContent, setFileContent] = useState(''); // Separate state for file tab content
 
   const handleRunClick = () => {
-    if (!text.trim() || isLoading) return;
-    onRunPipeline(text);
+    const contentToRun = mode === 'file' ? (fileContent || text) : text;
+    if (!contentToRun.trim() || isLoading) return;
+    onRunPipeline(contentToRun);
   };
 
   const handleFileUpload = (event) => {
@@ -18,7 +20,9 @@ const InputPanel = ({ onRunPipeline, isLoading, finalOutput }) => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setText(e.target.result);
+        const content = e.target.result;
+        setText(content); // Update text input as well
+        setFileContent(content);
         setFileName(file.name);
       };
       reader.readAsText(file);
@@ -26,14 +30,36 @@ const InputPanel = ({ onRunPipeline, isLoading, finalOutput }) => {
   };
 
   const handleDownload = () => {
-    const contentToDownload = finalOutput || text;
-    if (!contentToDownload.trim()) return;
+    let contentToDownload, downloadFileName;
+    
+    if (mode === 'file') {
+      // In file mode, prioritize pipeline results if available
+      if (resultData && resultData.trim()) {
+        contentToDownload = resultData;
+        downloadFileName = 'pipeline-output.xml';
+      } else if (fileContent && fileContent.trim()) {
+        contentToDownload = fileContent;
+        downloadFileName = fileName || 'document.txt';
+      } else {
+        alert('No content to download');
+        return;
+      }
+    } else {
+      // In text mode, download the text content
+      contentToDownload = text;
+      downloadFileName = 'document.txt';
+    }
+
+    if (!contentToDownload.trim()) {
+      alert('No content to download');
+      return;
+    }
 
     const blob = new Blob([contentToDownload], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = finalOutput ? 'approved-output.xml' : (fileName || 'document.txt');
+    a.download = downloadFileName;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
@@ -41,9 +67,12 @@ const InputPanel = ({ onRunPipeline, isLoading, finalOutput }) => {
   };
 
   const handleLoadOutput = () => {
-    if (finalOutput) {
-      setText(finalOutput);
-      setFileName('approved-output.xml');
+    const outputToLoad = resultData || finalOutput;
+    if (outputToLoad) {
+      setFileContent(outputToLoad);
+      setFileName('pipeline-output.xml');
+      // Also update text for consistency
+      setText(outputToLoad);
     }
   };
 
@@ -203,20 +232,20 @@ I need a mobile app for task management with user authentication, offline sync, 
                 File Operations
               </label>
               <div className="flex gap-2">
-                {finalOutput && (
+                {(resultData || finalOutput) && (
                   <button
                     onClick={handleLoadOutput}
                     className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded"
-                    title="Load approved output"
+                    title="Load pipeline output"
                   >
-                    📋 Load Output
+                    📋 Load Results
                   </button>
                 )}
                 <button
                   onClick={handleDownload}
-                  disabled={!text.trim()}
+                  disabled={!fileContent.trim() && !resultData}
                   className="px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs rounded"
-                  title="Download current content"
+                  title="Download content"
                 >
                   💾 Download
                 </button>
@@ -244,11 +273,21 @@ I need a mobile app for task management with user authentication, offline sync, 
               </div>
             )}
 
+            {/* Show pipeline results if available */}
+            {resultData && (
+              <div className="mb-2 p-2 bg-blue-900 border border-blue-600 rounded text-xs text-blue-200">
+                💡 Pipeline results available - click "Load Results" to view/edit or "Download" to save
+              </div>
+            )}
+
             <textarea
               className="w-full flex-grow bg-gray-900 rounded-md p-3 text-sm text-gray-200 resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Upload a document or paste content here..."
+              value={fileContent}
+              onChange={(e) => {
+                setFileContent(e.target.value);
+                setText(e.target.value); // Keep text state in sync
+              }}
+              placeholder="Upload a document, paste content here, or load pipeline results..."
             />
           </>
         )}
@@ -260,7 +299,7 @@ I need a mobile app for task management with user authentication, offline sync, 
         <div className="p-4 border-t border-gray-600">
           <button
             onClick={handleRunClick}
-            disabled={isLoading}
+            disabled={isLoading || (!text.trim() && !fileContent.trim())}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Processing...' : 'Run X-Flow Pipeline'}

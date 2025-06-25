@@ -515,7 +515,7 @@ export default function App() {
 
       {/* Column 3: Input and Results Panels */}
       <div className="w-96 flex flex-col border-l border-slate-200">
-        <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} />
+        <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} finalOutput={finalOutput} resultData={resultData} />
         <ResultsPanel resultData={resultData} isLoading={isLoading} />
       </div>
     </div>
