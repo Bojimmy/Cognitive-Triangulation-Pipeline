@@ -40,7 +40,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
     // Add typing indicator
     const typingMessage = {
       type: 'ai',
-      content: '🤖 Generating requirements...',
+      content: '🤖 Thinking...',
       timestamp: new Date().toLocaleTimeString()
     };
     setChatHistory(prev => [...prev, typingMessage]);
@@ -62,98 +62,59 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
   const generateResponse = (userInput) => {
     const lowerInput = userInput.toLowerCase();
     
-    // Check if it's a question
-    if (lowerInput.includes('?') || lowerInput.startsWith('how') || lowerInput.startsWith('what') || 
-        lowerInput.startsWith('why') || lowerInput.startsWith('when') || lowerInput.startsWith('where')) {
-      
-      // Answer common questions
-      if (lowerInput.includes('react flow') || lowerInput.includes('workflow')) {
-        return "React Flow is a library for building node-based workflow interfaces. In this app, you can drag nodes from the palette to create visual workflows. Each node represents a step in your process, and edges show the flow between steps.";
-      }
-      
-      if (lowerInput.includes('requirements') || lowerInput.includes('req-')) {
-        return "Requirements should be written in structured format like REQ-001: Description. This helps organize project specifications clearly. Would you like me to help convert your project description into structured requirements?";
-      }
-      
-      if (lowerInput.includes('node') && lowerInput.includes('add')) {
-        return "To add nodes to your workflow: 1) Look at the left panel (Node Palette), 2) Drag any node type onto the main canvas, 3) Connect nodes by dragging from one node's handle to another. You can delete selected nodes with Delete/Backspace.";
-      }
-      
-      if (lowerInput.includes('pipeline') || lowerInput.includes('run')) {
-        return "The pipeline processes your requirements through different workflow stages. Enter your project description in the text area, then click 'Run X-Flow Pipeline' to generate a visual workflow representation.";
-      }
-      
-      // General help
-      return "I can help you with workflow design, requirements structuring, and using this X-Flow interface. What specific aspect would you like to know more about?";
+    // Project management and workflow advice
+    if (lowerInput.includes('start') || lowerInput.includes('begin') || lowerInput.includes('getting started')) {
+      return "Great! Starting a new project? Here's my advice:\n\n1. **Define your goals clearly** - What problem are you solving?\n2. **Start small** - Build an MVP first\n3. **Plan your tech stack** - Choose familiar technologies\n4. **Set up version control** - Use Git from day one\n5. **Think about your users** - Who will use this?\n\nWhat kind of project are you thinking about?";
     }
+
+    if (lowerInput.includes('stuck') || lowerInput.includes('problem') || lowerInput.includes('issue')) {
+      return "I understand you're facing a challenge! Here's how I'd approach it:\n\n💡 **Break it down**: What's the smallest part you can tackle first?\n🔍 **Research**: Have others solved similar problems?\n🤝 **Ask for help**: Don't hesitate to reach out to communities\n📝 **Document**: Write down what you've tried\n\nTell me more about what's blocking you - I'm here to help brainstorm solutions!";
+    }
+
+    if (lowerInput.includes('tech stack') || lowerInput.includes('technology') || lowerInput.includes('framework')) {
+      return "Choosing the right tech stack is crucial! Here's my framework for deciding:\n\n🎯 **Consider your goals**: Performance? Speed of development? Team expertise?\n📊 **Popular combos**:\n   • Frontend: React/Vue + Tailwind\n   • Backend: Node.js/Python + Database\n   • Full-stack: Next.js, Django, or Rails\n\n💭 **My advice**: Start with what you know, then expand. What type of application are you building?";
+    }
+
+    if (lowerInput.includes('design') || lowerInput.includes('ui') || lowerInput.includes('user interface')) {
+      return "Great question about design! Here's my design philosophy:\n\n✨ **Keep it simple**: Users should understand it immediately\n📱 **Mobile-first**: Most users are on phones\n🎨 **Consistent patterns**: Use established UI conventions\n⚡ **Fast loading**: Performance is user experience\n♿ **Accessible**: Design for everyone\n\nAre you looking for design tools, principles, or specific UI advice?";
+    }
+
+    if (lowerInput.includes('database') || lowerInput.includes('data') || lowerInput.includes('storage')) {
+      return "Data strategy is so important! Here's how I think about it:\n\n📊 **Start simple**: PostgreSQL or MySQL for most projects\n🏗️ **Design your schema carefully**: Think about relationships early\n📈 **Plan for scale**: But don't over-engineer initially\n🔒 **Security first**: Always encrypt sensitive data\n💾 **Backup strategy**: Automate backups from day one\n\nWhat kind of data are you working with?";
+    }
+
+    if (lowerInput.includes('learn') || lowerInput.includes('improve') || lowerInput.includes('better')) {
+      return "Love the growth mindset! Here's my learning strategy:\n\n📚 **Build projects**: Learning by doing is most effective\n🎯 **Focus deeply**: Master one thing at a time\n👥 **Join communities**: Discord, Reddit, local meetups\n📖 **Read code**: Study well-written open source projects\n🔄 **Practice daily**: Even 30 minutes helps\n\nWhat specific skill are you trying to develop?";
+    }
+
+    if (lowerInput.includes('deployment') || lowerInput.includes('deploy') || lowerInput.includes('hosting')) {
+      return "Deployment advice coming up! Here's my hosting strategy:\n\n🚀 **For beginners**: Vercel (frontend) + Railway/Heroku (backend)\n💰 **Budget-friendly**: Netlify, GitHub Pages, or Replit\n⚡ **Performance**: AWS, Google Cloud, or Digital Ocean\n🔄 **CI/CD**: Set up automated deployments early\n📊 **Monitoring**: Use analytics and error tracking\n\nWhat type of app are you looking to deploy?";
+    }
+
+    if (lowerInput.includes('team') || lowerInput.includes('collaboration') || lowerInput.includes('working together')) {
+      return "Team collaboration is an art! Here's what works:\n\n🎯 **Clear communication**: Regular standups and documentation\n📋 **Define roles**: Who does what, when\n🔄 **Version control**: Git workflow with code reviews\n📊 **Project management**: Trello, Notion, or Linear\n🤝 **Code standards**: Consistent formatting and conventions\n\nAre you leading a team or joining one?";
+    }
+
+    // React Flow and tool-specific advice
+    if (lowerInput.includes('react flow') || lowerInput.includes('workflow') || lowerInput.includes('visual')) {
+      return "React Flow is fantastic for visual workflows! Here's how to make the most of it:\n\n🎨 **Custom nodes**: Create nodes that match your domain\n🔗 **Smart connections**: Validate connections between node types\n💾 **Save/load**: Let users save their workflows\n📱 **Responsive**: Make sure it works on different screen sizes\n⚡ **Performance**: Use React.memo for complex workflows\n\nWhat kind of workflow are you visualizing?";
+    }
+
+    // Encouragement and motivation
+    if (lowerInput.includes('difficult') || lowerInput.includes('hard') || lowerInput.includes('frustrated')) {
+      return "I hear you - coding can be challenging! Remember:\n\n💪 **Every expert was once a beginner**\n🎯 **Break big problems into tiny pieces**\n🎉 **Celebrate small wins**\n🤝 **It's okay to ask for help**\n🔄 **Debugging is a skill - you're getting better**\n\nYou've got this! What's the specific challenge you're facing?";
+    }
+
+    // Default conversational response
+    const responses = [
+      "That's interesting! Tell me more about what you're working on. I'm here to help with advice, suggestions, and problem-solving.",
+      "I'd love to help! What specific aspect of your project or coding journey can I assist with?",
+      "Great question! I'm here to provide guidance on development, design, project management, and technical decisions. What's on your mind?",
+      "I'm here to be your coding advisor! Whether it's technical choices, project planning, or just brainstorming - what can I help with?",
+      "Sounds like you're working on something exciting! I can offer advice on architecture, tools, best practices, or just be a sounding board. What's up?"
+    ];
     
-    // If not a question, generate requirements
-    const lowerDesc = userInput;
-    let requirements = [];
-    let reqNum = 1;
-
-    // Core requirements based on project type
-    if (lowerDesc.includes('web') || lowerDesc.includes('website') || lowerDesc.includes('app')) {
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: User Interface Design - Create responsive and intuitive user interface`);
-      reqNum++;
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: User Authentication - Implement secure login and registration system`);
-      reqNum++;
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Database Integration - Set up data storage and retrieval system`);
-      reqNum++;
-    }
-
-    if (lowerDesc.includes('mobile') || lowerDesc.includes('ios') || lowerDesc.includes('android')) {
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Platform Support - Support for iOS and/or Android platforms`);
-      reqNum++;
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Offline Functionality - Core features work without internet connection`);
-      reqNum++;
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Push Notifications - Real-time user engagement notifications`);
-      reqNum++;
-    }
-
-    if (lowerDesc.includes('api') || lowerDesc.includes('backend') || lowerDesc.includes('server')) {
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: API Endpoints - RESTful API design and implementation`);
-      reqNum++;
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Data Validation - Input validation and sanitization`);
-      reqNum++;
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Error Handling - Comprehensive error management system`);
-      reqNum++;
-    }
-
-    if (lowerDesc.includes('ecommerce') || lowerDesc.includes('shop') || lowerDesc.includes('store')) {
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Product Catalog - Product listing and search functionality`);
-      reqNum++;
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Shopping Cart - Add to cart and checkout process`);
-      reqNum++;
-      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Payment Integration - Secure payment processing system`);
-      reqNum++;
-    }
-
-    // Security requirements
-    requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Security - Data encryption and secure communication protocols`);
-    reqNum++;
-
-    // Performance requirements  
-    requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Performance - Page load times under 3 seconds`);
-    reqNum++;
-
-    // Testing requirements
-    requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Testing - Unit tests and integration test coverage`);
-    reqNum++;
-
-    if (requirements.length === 3) {
-      // Generic requirements if no specific type detected
-      requirements = [
-        `REQ-001: Core Functionality - Implement main features as described`,
-        `REQ-002: User Experience - Intuitive and user-friendly interface`,
-        `REQ-003: Data Management - Proper data handling and storage`,
-        `REQ-004: Security - Secure data transmission and storage`,
-        `REQ-005: Performance - Optimized for speed and efficiency`,
-        `REQ-006: Testing - Comprehensive testing coverage`
-      ];
-    }
-
-    return requirements.join('\n\n');
+    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   const clearChat = () => {
@@ -263,7 +224,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
             {/* Chat Header */}
             <div className="flex justify-between items-center p-4 border-b border-gray-700">
               <h3 className="text-sm font-medium text-gray-300">
-                🤖 Requirements Assistant
+                🤖 Development Advisor
               </h3>
               <div className="flex gap-2">
                 {chatHistory.length > 0 && (
@@ -297,8 +258,8 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
               {chatHistory.length === 0 ? (
                 <div className="text-center text-gray-500 text-sm mt-8">
                   <div className="text-3xl mb-3">💬</div>
-                  <div className="mb-2">Requirements Assistant</div>
-                  <div className="text-xs">Ask questions or describe your project for structured requirements</div>
+                  <div className="mb-2">Development Advisor</div>
+                  <div className="text-xs">Ask questions, get advice, or brainstorm ideas - I'm here to help!</div>
                 </div>
               ) : (
                 <div className="space-y-4">
