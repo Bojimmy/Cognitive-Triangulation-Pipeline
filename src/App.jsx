@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
   MiniMap,
@@ -411,9 +410,9 @@ export default function App() {
       const response = await fetch('/api/process', {
         method: 'POST',
         headers: {
-          'Content-Type': 'text/plain',
+          'Content-Type': 'application/json',
         },
-        body: inputText
+        body: JSON.stringify({ text: inputText })
       });
 
       if (!response.ok) {
@@ -424,7 +423,7 @@ export default function App() {
       setResultData(textData);
     } catch (error) {
       console.error('Error:', error);
-      setResultData(`Error: ${error.message}\n\nIs the Python backend running correctly in Replit?`);
+      setResultData(`Error: ${error.message}\n\nMake sure the Flask backend is running on port 5002`);
     } finally {
       setIsLoading(false);
     }
@@ -432,10 +431,10 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
-      
+
       {/* Column 1: Node Palette */}
       <NodePalette />
-      
+
       {/* Column 2: The Main Canvas (takes up the most space) */}
       <div className="flex-1 relative h-screen">
         <div className="absolute top-4 right-4 z-10 flex gap-2">
@@ -448,7 +447,7 @@ export default function App() {
             </button>
           )}
         </div>
-        
+
         <div className="w-full h-full" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
