@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import ReactFlow, {
   MiniMap,
@@ -441,12 +440,11 @@ export default function App() {
     <div className="flex h-screen bg-gray-100">
       <div className="w-80 flex flex-col">
         <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} />
-        <ResultsPanel resultData={resultData} isLoading={isLoading} />
       </div>
-      
+
       <NodePalette />
-      
-      <div className="flex-1 relative h-screen">
+
+      <div className="flex-1 relative" style={{ height: '100vh', width: '100%' }}>
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           {selectedNodes.length > 0 && (
             <button
@@ -457,8 +455,8 @@ export default function App() {
             </button>
           )}
         </div>
-        
-        <div className="w-full h-full" ref={reactFlowWrapper}>
+
+        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -478,6 +476,10 @@ export default function App() {
             <Background color="#aaa" gap={16} />
           </ReactFlow>
         </div>
+      </div>
+
+      <div className="w-80 flex flex-col">
+        <ResultsPanel resultData={resultData} isLoading={isLoading} />
       </div>
     </div>
   );
