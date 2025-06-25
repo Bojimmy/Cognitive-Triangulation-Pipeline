@@ -733,6 +733,133 @@ CORS(app)  # Enable CORS for React frontend
 # Initialize pipeline
 pipeline = XAgentPipeline()
 
+def _convert_xml_to_natural_language(xml_output: str, status: str) -> str:
+    """Convert XML pipeline output to natural language"""
+    try:
+        tree = etree.fromstring(xml_output.encode())
+        
+        # Extract key information
+        pipeline_status = tree.find('.//Status')
+        iterations = tree.find('.//Iterations')
+        domain = tree.find('.//Domain')
+        complexity = tree.find('.//Complexity')
+        
+        # Extract requirements
+        requirements = tree.findall('.//Requirements/Requirement')
+        
+        # Extract tasks
+        tasks = tree.findall('.//Tasks/Task')
+        total_tasks = tree.find('.//TotalTasks')
+        story_points = tree.find('.//StoryPoints')
+        
+        # Extract approval info
+        approved = tree.find('.//Decision')
+        quality_score = tree.find('.//QualityScore')
+        feedback = tree.find('.//Feedback')
+        
+        # Build natural language output
+        output = []
+        
+        # Header
+        output.append("🚀 **X-Agent Pipeline Analysis Results**\n")
+        output.append("=" * 50)
+        
+        # Pipeline Summary
+        status_icon = "✅" if "APPROVED" in status else "❌"
+        output.append(f"\n{status_icon} **Project Status:** {status}")
+        if iterations is not None:
+            output.append(f"🔄 **Processing Iterations:** {iterations.text}")
+        
+        # Domain Analysis
+        if domain is not None:
+            output.append(f"\n📊 **Project Domain:** {domain.text.title()}")
+        if complexity is not None:
+            output.append(f"📈 **Complexity Level:** {complexity.text}/5")
+        
+        # Requirements Section
+        if requirements:
+            output.append(f"\n📋 **Requirements Identified ({len(requirements)}):**")
+            for req in requirements:
+                priority_icon = "🔥" if req.get('priority') == 'high' else "📝"
+                output.append(f"   {priority_icon} {req.get('id')}: {req.text}")
+        
+        # Task Breakdown
+        if tasks:
+            output.append(f"\n🔧 **Task Breakdown ({len(tasks)} tasks):**")
+            if total_tasks is not None and story_points is not None:
+                output.append(f"   📊 Total Story Points: {story_points.text}")
+            
+            # Group tasks by requirement
+            req_tasks = {}
+            for task in tasks:
+                req_id = task.get('req_id', 'OTHER')
+                if req_id not in req_tasks:
+                    req_tasks[req_id] = []
+                req_tasks[req_id].append(task)
+            
+            for req_id, task_list in req_tasks.items():
+                if req_id != 'DOMAIN':
+                    output.append(f"\n   📌 Tasks for {req_id}:")
+                    for task in task_list[:3]:  # Show first 3 tasks per requirement
+                        points = task.get('points', '0')
+                        output.append(f"      • {task.text} ({points} points)")
+                    if len(task_list) > 3:
+                        output.append(f"      ... and {len(task_list) - 3} more tasks")
+        
+        # Project Health Assessment
+        if quality_score is not None:
+            score = float(quality_score.text.replace('%', ''))
+            if score >= 80:
+                health = "Excellent ✨"
+            elif score >= 60:
+                health = "Good 👍"
+            else:
+                health = "Needs Improvement ⚠️"
+            output.append(f"\n🎯 **Project Health:** {health} ({quality_score.text})")
+        
+        # Feedback and Recommendations
+        if feedback is not None:
+            feedback_text = feedback.text
+            if "APPROVED" in feedback_text:
+                output.append(f"\n✅ **Approval:** {feedback_text}")
+                output.append("\n🎉 **Next Steps:**")
+                output.append("   • Begin development sprint planning")
+                output.append("   • Set up development environment")
+                output.append("   • Create detailed technical specifications")
+                output.append("   • Establish testing framework")
+            else:
+                output.append(f"\n❌ **Issues Identified:** {feedback_text}")
+                output.append("\n🔧 **Recommendations:**")
+                if "reduce scope" in feedback_text.lower():
+                    output.append("   • Focus on core features first")
+                    output.append("   • Consider phased development approach")
+                    output.append("   • Prioritize high-impact requirements")
+                if "too complex" in feedback_text.lower():
+                    output.append("   • Break down complex requirements")
+                    output.append("   • Simplify user interface design")
+                    output.append("   • Consider using existing frameworks")
+                if "quality" in feedback_text.lower():
+                    output.append("   • Add comprehensive testing requirements")
+                    output.append("   • Include code review processes")
+                    output.append("   • Define quality metrics")
+        
+        # Project Summary
+        output.append(f"\n📈 **Project Summary:**")
+        if requirements and tasks:
+            output.append(f"   • {len(requirements)} core requirements identified")
+            output.append(f"   • {len(tasks)} implementation tasks defined")
+        if story_points is not None:
+            effort_weeks = int(story_points.text) // 10  # Rough estimate
+            output.append(f"   • Estimated effort: {effort_weeks}-{effort_weeks+2} weeks")
+        
+        output.append("\n" + "=" * 50)
+        output.append("💡 **Tip:** You can refine these requirements and run the analysis again for better results!")
+        
+        return "\n".join(output)
+        
+    except Exception as e:
+        return f"Analysis completed, but there was an issue formatting the results: {str(e)}\n\nRaw output:\n{xml_output}"
+
 @app.route('/api/process', methods=['POST'])
 def process_document():
     """Process document through X-Agent pipeline with feedback loop"""
@@ -752,11 +879,13 @@ def process_document():
         logger.info(f"✅ Pipeline completed: {result.get('status', 'unknown')} after {result.get('iterations', 0)} iterations")
         
         if result['success']:
-            # Return the XML result as plain text for frontend parsing
-            return result['final_output'], 200, {'Content-Type': 'text/plain'}
+            # Convert XML to natural language
+            natural_output = self._convert_xml_to_natural_language(result['final_output'], result['status'])
+            return natural_output, 200, {'Content-Type': 'text/plain'}
         else:
-            # Return rejection with details
-            return result['final_output'], 200, {'Content-Type': 'text/plain'}
+            # Convert rejection to natural language
+            natural_output = self._convert_xml_to_natural_language(result['final_output'], result['status'])
+            return natural_output, 200, {'Content-Type': 'text/plain'}
             
     except Exception as e:
         logger.error(f"API error: {e}")
