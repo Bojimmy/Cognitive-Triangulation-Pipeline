@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 
 const InputPanel = ({ onRunPipeline, isLoading }) => {
@@ -26,17 +25,17 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
 
   const handleChatSubmit = async () => {
     if (!chatInput.trim() || isLoading) return;
-    
+
     const userMessage = chatInput;
     const newMessage = {
       type: 'user',
       content: userMessage,
       timestamp: new Date().toLocaleTimeString()
     };
-    
+
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
-    
+
     // Add typing indicator
     const typingMessage = {
       type: 'ai',
@@ -44,11 +43,11 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
       timestamp: new Date().toLocaleTimeString()
     };
     setChatHistory(prev => [...prev, typingMessage]);
-    
+
     // Simulate realistic response time
     setTimeout(() => {
       const response = generateResponse(userMessage);
-      
+
       // Remove typing indicator and add response
       setChatHistory(prev => {
         const withoutTyping = prev.slice(0, -1);
@@ -63,7 +62,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
 
   const generateResponse = (userInput) => {
     const lowerInput = userInput.toLowerCase();
-    
+
     // Project management and workflow advice
     if (lowerInput.includes('start') || lowerInput.includes('begin') || lowerInput.includes('getting started')) {
       return "Great! Starting a new project? Here's my advice:\n\n1. **Define your goals clearly** - What problem are you solving?\n2. **Start small** - Build an MVP first\n3. **Plan your tech stack** - Choose familiar technologies\n4. **Set up version control** - Use Git from day one\n5. **Think about your users** - Who will use this?\n\nWhat kind of project are you thinking about?";
@@ -115,7 +114,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
       "I'm here to be your coding advisor! Whether it's technical choices, project planning, or just brainstorming - what can I help with?",
       "Sounds like you're working on something exciting! I can offer advice on architecture, tools, best practices, or just be a sounding board. What's up?"
     ];
-    
+
     return responses[Math.floor(Math.random() * responses.length)];
   };
 
@@ -212,11 +211,11 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
           </>
         )}
 
-        
+
       </div>
 
       {(mode === 'text' || mode === 'file') && (
-        <div className="p-4 border-t border-gray-700">
+        <div className="p-4 border-t border-gray-600">
           <button
             onClick={handleRunClick}
             disabled={isLoading}
@@ -294,7 +293,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
             </div>
 
             {/* Chat Input Area */}
-            <div className="p-4 border-t border-gray-700">
+            <div className="p-4 border-t border-gray-600">
               <div className="flex gap-2">
                 <textarea
                   value={chatInput}
