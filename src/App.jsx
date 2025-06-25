@@ -490,7 +490,8 @@ export default function App() {
 
         <div 
           ref={reactFlowWrapper}
-          style={{ width: '100%', height: '100vh' }}
+          style={{ width: '100%', height: '100%' }}
+          className="w-full h-full"
         >
           <ReactFlow
             nodes={nodes}
