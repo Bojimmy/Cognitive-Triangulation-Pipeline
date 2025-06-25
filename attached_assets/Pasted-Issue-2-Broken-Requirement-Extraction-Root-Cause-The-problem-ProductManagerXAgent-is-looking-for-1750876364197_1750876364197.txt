@@ -1,0 +1,37 @@
+Issue 2: Broken Requirement Extraction (Root Cause)
+The problem: ProductManagerXAgent is looking for explicit "REQ-001:" patterns, but you gave it natural business language.
+Your input: "Our metropolitan area is experiencing severe traffic..."
+Agent expects: "REQ-001: Traffic Management System\nREQ-002: Mobile App..."
+The Fix for Requirement Extraction:
+Replace the regex-based extraction with natural language processing:
+pythondef _extract_requirements_from_natural_language(self, content: str) -> list:
+    """Extract requirements from natural business language"""
+    
+    # Split into sentences and find requirement-like statements
+    sentences = content.split('.')
+    requirements = []
+    req_id = 1
+    
+    for sentence in sentences:
+        sentence = sentence.strip()
+        
+        # Look for requirement indicators
+        if any(indicator in sentence.lower() for indicator in [
+            'needs to', 'must', 'should', 'requires', 'system', 
+            'platform', 'application', 'users', 'integration'
+        ]):
+            if len(sentence) > 20:  # Filter out short fragments
+                requirements.append({
+                    'id': f"REQ-{req_id:03d}",
+                    'title': sentence[:100] + "..." if len(sentence) > 100 else sentence,
+                    'priority': 'high' if any(word in sentence.lower() for word in ['critical', 'essential', 'must']) else 'medium'
+                })
+                req_id += 1
+    
+    return requirements[:8]  # Limit to 8 key requirements
+Quick Fix Strategy:
+1. Fix Port First (1 minute):
+Either change Flask to port 5002 OR change frontend to port 5000
+2. Fix Requirements (Give Replit this code):
+Tell Replit: "Replace the regex requirement extraction with natural language processing that looks for sentences containing requirement indicators like 'needs to', 'must', 'should', 'requires', 'system', etc."
+The port issue will fix the 500 error immediately. The requirement extraction will make the pipeline actually work with business language! 🚀RetryClaude can make mistakes. Please double-check responses.Research Sonnet 4
