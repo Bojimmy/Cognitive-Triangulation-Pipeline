@@ -1309,6 +1309,7 @@ def process_document():
         logger.info(f"📥 Received document content: {document_content[:200]}...")
         
         if not document_content or not document_content.strip():
+            logger.error("No document content provided")
             return jsonify({"error": "No document content provided"}), 400
         
         # Execute pipeline with feedback loop
@@ -1326,9 +1327,14 @@ def process_document():
             natural_output = _convert_xml_to_natural_language(result['final_output'], result['status'])
             return natural_output, 200, {'Content-Type': 'text/plain'}
             
+    except ImportError as e:
+        logger.error(f"Import error: {e}")
+        return jsonify({"error": f"Missing dependencies: {str(e)}"}), 500
     except Exception as e:
         logger.error(f"API error: {e}")
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 
 @app.route('/api/status', methods=['GET'])
 def get_status():
@@ -1443,16 +1449,22 @@ def health_check():
     return jsonify({"status": "healthy", "service": "X-Agents Backend with Feedback Loop"}), 200
 
 if __name__ == "__main__":
-    print("🚀 Starting X-Agent Backend Server with Feedback Loop...")
-    print("📡 API available at http://0.0.0.0:5002")
-    print("🔗 Endpoints:")
-    print("   POST /api/process - Process documents with feedback loop")
-    print("   POST /api/chat    - LLM-powered requirements chat")
-    print("   GET  /api/status  - Get pipeline status")
-    print("   GET  /health     - Health check")
-    print("\n🔄 Feedback Loop Features:")
-    print("   • Analyst → PM → Task Manager → Scrum Master")
-    print("   • PM ↔ Scrum Master feedback loop (max 3 iterations)")
-    print("   • Automatic scope reduction and quality improvement")
-    
-    app.run(host='0.0.0.0', port=5002, debug=True, threaded=True)
+    try:
+        print("🚀 Starting X-Agent Backend Server with Feedback Loop...")
+        print("📡 API available at http://0.0.0.0:5002")
+        print("🔗 Endpoints:")
+        print("   POST /api/process - Process documents with feedback loop")
+        print("   POST /api/chat    - LLM-powered requirements chat")
+        print("   GET  /api/status  - Get pipeline status")
+        print("   GET  /health     - Health check")
+        print("\n🔄 Feedback Loop Features:")
+        print("   • Analyst → PM → Task Manager → Scrum Master")
+        print("   • PM ↔ Scrum Master feedback loop (max 3 iterations)")
+        print("   • Automatic scope reduction and quality improvement")
+        print(f"\n✅ Flask server starting on 0.0.0.0:5002...")
+        
+        app.run(host='0.0.0.0', port=5002, debug=False, threaded=True)
+    except Exception as e:
+        print(f"❌ Failed to start Flask server: {e}")
+        import traceback
+        traceback.print_exc()
