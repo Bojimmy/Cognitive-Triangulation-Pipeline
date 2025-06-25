@@ -26,7 +26,7 @@ class BaseXAgent(ABC):
 
     def __init__(self, agent_type: str):
         self.agent_type = agent_type
-        self.metrics = {'total_time': 0}
+        self.metrics = {'total_time': 0.0}
 
     def process(self, input_xml: str) -> str:
         """Main processing with timing"""
@@ -41,7 +41,7 @@ class BaseXAgent(ABC):
         # Generate output XML
         output_xml = self._generate_xml(result)
 
-        self.metrics['total_time'] = (time.time() - start_time) * 1000
+        self.metrics['total_time'] = float((time.time() - start_time) * 1000)
         return output_xml
 
     @abstractmethod
@@ -63,7 +63,8 @@ class AnalystXAgent(BaseXAgent):
 
     def _process_intelligence(self, parsed_input: etree.Element) -> dict:
         """Detect document domain and type"""
-        content = etree.tostring(parsed_input, encoding='unicode', method='text').lower()
+        content_bytes = etree.tostring(parsed_input, encoding='unicode', method='text')
+        content = content_bytes.lower() if content_bytes else ""
 
         # Enhanced domain detection with business-specific intelligence
         # Fitness/Health apps (check first as they're often misclassified)
@@ -117,8 +118,10 @@ class ProductManagerXAgent(BaseXAgent):
             return self._process_scrum_feedback(parsed_input)
 
         # Normal initial processing from Analyst
-        domain = parsed_input.find('Domain').text
-        content = parsed_input.find('Content').text
+        domain_elem = parsed_input.find('Domain')
+        content_elem = parsed_input.find('Content')
+        domain = domain_elem.text if domain_elem is not None else "general"
+        content = content_elem.text if content_elem is not None else ""
 
         return self._extract_requirements(domain, content)
 
@@ -768,7 +771,8 @@ class TaskManagerXAgent(BaseXAgent):
 
     def _process_intelligence(self, parsed_input: etree.Element) -> dict:
         """Generate tasks from requirements"""
-        domain = parsed_input.find('.//Domain').text
+        domain_elem = parsed_input.find('.//Domain')
+        domain = domain_elem.text if domain_elem is not None else "general"
         requirements = parsed_input.findall('.//Requirement')
         feedback_applied = parsed_input.find('FeedbackApplied') is not None
 
@@ -789,7 +793,7 @@ class TaskManagerXAgent(BaseXAgent):
 
             for pattern in patterns:
                 # Adjust effort based on priority
-                                base_points = 3 if pattern == 'Implement' else 2
+                base_points = 3 if pattern == 'Implement' else 2
 
                 if req_priority == 'high':
                     story_points = base_points + 1
