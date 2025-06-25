@@ -1,7 +1,8 @@
 import React from 'react';
 
 const ResultsPanel = ({ resultData, isLoading }) => {
-  <div className="flex-1 bg-gray-700 text-gray-200 overflow-hidden flex flex-col">
+  return (
+    <div className="flex-1 bg-gray-900 text-gray-200 overflow-hidden flex flex-col">
       <div className="p-4 border-b border-gray-700">
         <h3 className="text-lg font-semibold text-white">Pipeline Results</h3>
       </div>

@@ -140,7 +140,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-700 border-r border-gray-700">
+    <div className="flex flex-col h-full bg-gray-800 border-r border-gray-700">
       {/* Mode Tabs */}
       <div className="flex border-b border-gray-700">
         <button
