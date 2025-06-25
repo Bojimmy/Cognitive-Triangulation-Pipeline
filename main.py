@@ -11,11 +11,19 @@ import time
 import json
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
-from lxml import etree
 import logging
 import re
 import os
 import requests
+
+# Import lxml with error handling
+try:
+    from lxml import etree
+except ImportError:
+    print("Installing lxml...")
+    import subprocess
+    subprocess.check_call(['pip', 'install', 'lxml'])
+    from lxml import etree
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -1454,7 +1462,7 @@ def health_check():
 if __name__ == "__main__":
     try:
         print("🚀 Starting X-Agent Backend Server with Feedback Loop...")
-        print("📡 API available at http://0.0.0.0:5002")
+        print("📡 API available at http://0.0.0.0:5000")
         print("🔗 Endpoints:")
         print("   POST /api/process - Process documents with feedback loop")
         print("   POST /api/chat    - LLM-powered requirements chat")
@@ -1483,13 +1491,13 @@ if __name__ == "__main__":
             subprocess.check_call(['pip', 'install', 'flask', 'flask-cors', 'lxml', 'requests'])
             print("✅ Dependencies installed")
 
-        print(f"\n✅ Flask server starting on 0.0.0.0:5002...")
-        print("🔧 Binding to 0.0.0.0:5002 for Replit compatibility...")
+        print(f"\n✅ Flask server starting on 0.0.0.0:5000...")
+        print("🔧 Binding to 0.0.0.0:5000 for Replit compatibility...")
 
         # Start Flask server with explicit settings for Replit
         app.run(
             host='0.0.0.0', 
-            port=5002, 
+            port=5000, 
             debug=False, 
             threaded=True, 
             use_reloader=False,
@@ -1498,16 +1506,16 @@ if __name__ == "__main__":
 
     except OSError as e:
         if "Address already in use" in str(e):
-            print(f"❌ Port 5002 is already in use. Attempting cleanup...")
+            print(f"❌ Port 5000 is already in use. Attempting cleanup...")
             import subprocess
             import time
             try:
-                # Kill any existing processes on port 5002
-                subprocess.run(['lsof', '-ti:5002'], capture_output=True, check=False)
-                subprocess.run(['kill', '-9'] + subprocess.run(['lsof', '-ti:5002'], capture_output=True, text=True).stdout.split(), check=False)
+                # Kill any existing processes on port 5000
+                subprocess.run(['lsof', '-ti:5000'], capture_output=True, check=False)
+                subprocess.run(['kill', '-9'] + subprocess.run(['lsof', '-ti:5000'], capture_output=True, text=True).stdout.split(), check=False)
                 time.sleep(2)
                 print("🔄 Retrying Flask server startup...")
-                app.run(host='0.0.0.0', port=5002, debug=False, threaded=True, use_reloader=False)
+                app.run(host='0.0.0.0', port=5000, debug=False, threaded=True, use_reloader=False)
             except Exception as retry_e:
                 print(f"❌ Failed to restart: {retry_e}")
                 print("💡 Try manually stopping the workflow and restarting it")

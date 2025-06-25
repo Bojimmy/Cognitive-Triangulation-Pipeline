@@ -488,7 +488,7 @@ export default function App() {
 
         <div 
           ref={reactFlowWrapper}
-          style={{ width: '100%', height: '100vh' }}
+          style={{ width: '100%', height: '100vh', minHeight: '600px' }}
           className="w-full h-screen"
         >
           <ReactFlow
@@ -504,7 +504,7 @@ export default function App() {
             nodeTypes={nodeTypes}
             fitView
             className="bg-slate-50"
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%', minHeight: '600px' }}
           >
             <MiniMap />
             <Controls />
