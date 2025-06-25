@@ -6,6 +6,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
   const [mode, setMode] = useState('text'); // 'text', 'file', 'chat'
   const [chatHistory, setChatHistory] = useState([]);
   const [chatInput, setChatInput] = useState('');
+  const [showChatPopup, setShowChatPopup] = useState(false);
 
   const handleRunClick = () => {
     if (!text.trim() || isLoading) return;
@@ -39,45 +40,92 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
     // Add typing indicator
     const typingMessage = {
       type: 'ai',
-      content: '🤖 Thinking...',
+      content: '🤖 Generating requirements...',
       timestamp: new Date().toLocaleTimeString()
     };
     setChatHistory(prev => [...prev, typingMessage]);
     
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          history: chatHistory
-        })
-      });
-      
-      const data = await response.json();
-      
-      // Remove typing indicator and add real response
-      setChatHistory(prev => {
-        const withoutTyping = prev.slice(0, -1);
-        return [...withoutTyping, {
-          type: 'ai',
-          content: data.response || 'Sorry, I encountered an error processing your request.',
-          timestamp: new Date().toLocaleTimeString()
-        }];
-      });
-    } catch (error) {
-      console.error('Chat error:', error);
-      setChatHistory(prev => {
-        const withoutTyping = prev.slice(0, -1);
-        return [...withoutTyping, {
-          type: 'ai',
-          content: 'Sorry, I encountered an error. Please try again later.',
-          timestamp: new Date().toLocaleTimeString()
-        }];
-      });
+    // Generate structured requirements directly
+    const requirements = generateRequirements(userMessage);
+    
+    // Remove typing indicator and add requirements
+    setChatHistory(prev => {
+      const withoutTyping = prev.slice(0, -1);
+      return [...withoutTyping, {
+        type: 'ai',
+        content: requirements,
+        timestamp: new Date().toLocaleTimeString()
+      }];
+    });
+  };
+
+  const generateRequirements = (description) => {
+    const lowerDesc = description.toLowerCase();
+    let requirements = [];
+    let reqNum = 1;
+
+    // Core requirements based on project type
+    if (lowerDesc.includes('web') || lowerDesc.includes('website') || lowerDesc.includes('app')) {
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: User Interface Design - Create responsive and intuitive user interface`);
+      reqNum++;
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: User Authentication - Implement secure login and registration system`);
+      reqNum++;
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Database Integration - Set up data storage and retrieval system`);
+      reqNum++;
     }
+
+    if (lowerDesc.includes('mobile') || lowerDesc.includes('ios') || lowerDesc.includes('android')) {
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Platform Support - Support for iOS and/or Android platforms`);
+      reqNum++;
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Offline Functionality - Core features work without internet connection`);
+      reqNum++;
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Push Notifications - Real-time user engagement notifications`);
+      reqNum++;
+    }
+
+    if (lowerDesc.includes('api') || lowerDesc.includes('backend') || lowerDesc.includes('server')) {
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: API Endpoints - RESTful API design and implementation`);
+      reqNum++;
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Data Validation - Input validation and sanitization`);
+      reqNum++;
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Error Handling - Comprehensive error management system`);
+      reqNum++;
+    }
+
+    if (lowerDesc.includes('ecommerce') || lowerDesc.includes('shop') || lowerDesc.includes('store')) {
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Product Catalog - Product listing and search functionality`);
+      reqNum++;
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Shopping Cart - Add to cart and checkout process`);
+      reqNum++;
+      requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Payment Integration - Secure payment processing system`);
+      reqNum++;
+    }
+
+    // Security requirements
+    requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Security - Data encryption and secure communication protocols`);
+    reqNum++;
+
+    // Performance requirements  
+    requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Performance - Page load times under 3 seconds`);
+    reqNum++;
+
+    // Testing requirements
+    requirements.push(`REQ-${reqNum.toString().padStart(3, '0')}: Testing - Unit tests and integration test coverage`);
+    reqNum++;
+
+    if (requirements.length === 3) {
+      // Generic requirements if no specific type detected
+      requirements = [
+        `REQ-001: Core Functionality - Implement main features as described`,
+        `REQ-002: User Experience - Intuitive and user-friendly interface`,
+        `REQ-003: Data Management - Proper data handling and storage`,
+        `REQ-004: Security - Secure data transmission and storage`,
+        `REQ-005: Performance - Optimized for speed and efficiency`,
+        `REQ-006: Testing - Comprehensive testing coverage`
+      ];
+    }
+
+    return requirements.join('\n\n');
   };
 
   const clearChat = () => {
@@ -114,10 +162,8 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
           📄 File
         </button>
         <button
-          onClick={() => setMode('chat')}
-          className={`flex-1 px-4 py-2 text-sm font-medium ${
-            mode === 'chat' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-gray-200'
-          }`}
+          onClick={() => setShowChatPopup(true)}
+          className="flex-1 px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200"
         >
           💬 Chat
         </button>
@@ -167,17 +213,37 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
           </>
         )}
 
-        {mode === 'chat' && (
-          <div className="flex flex-col h-full">
-            {/* Chat Header with Controls */}
-            <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+        
+      </div>
+
+      {(mode === 'text' || mode === 'file') && (
+        <div className="p-4 border-t border-gray-700">
+          <button
+            onClick={handleRunClick}
+            disabled={isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Processing...' : 'Run X-Flow Pipeline'}
+          </button>
+        </div>
+      )}
+
+      {/* Chat Popup */}
+      {showChatPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg w-96 h-96 flex flex-col border border-gray-700">
+            {/* Chat Header */}
+            <div className="flex justify-between items-center p-4 border-b border-gray-700">
               <h3 className="text-sm font-medium text-gray-300">
                 🤖 Requirements Assistant
               </h3>
               <div className="flex gap-2">
                 {chatHistory.length > 0 && (
                   <button
-                    onClick={generateFromChat}
+                    onClick={() => {
+                      generateFromChat();
+                      setShowChatPopup(false);
+                    }}
                     className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-white text-xs"
                   >
                     Use for Pipeline
@@ -189,51 +255,22 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
                 >
                   Clear
                 </button>
-              </div>
-            </div>
-
-            {/* Chat Input Area - NOW AT TOP */}
-            <div className="bg-gray-800 rounded-lg p-3 border border-gray-700 mb-3">
-              <div className="flex gap-2">
-                <textarea
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleChatSubmit();
-                    }
-                  }}
-                  placeholder="Ask about requirements..."
-                  className="flex-1 bg-gray-700 text-white text-sm px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
-                  rows="2"
-                  disabled={isLoading}
-                />
                 <button
-                  onClick={handleChatSubmit}
-                  disabled={!chatInput.trim() || isLoading}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm rounded font-medium"
+                  onClick={() => setShowChatPopup(false)}
+                  className="px-2 py-1 bg-gray-600 hover:bg-gray-700 rounded text-white text-xs"
                 >
-                  {isLoading ? '...' : 'Send'}
+                  ✕
                 </button>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                Press Enter to send • Shift+Enter for new line
-              </div>
             </div>
 
-            {/* Chat Messages Area - NOW TAKES ALL REMAINING SPACE */}
-            <div className="flex-1 bg-gray-900 rounded-lg p-4 overflow-y-auto">
+            {/* Chat Messages Area */}
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-900">
               {chatHistory.length === 0 ? (
                 <div className="text-center text-gray-500 text-sm mt-8">
                   <div className="text-3xl mb-3">💬</div>
-                  <div className="mb-2">Welcome to Requirements Chat!</div>
-                  <div className="text-xs">Ask questions like:</div>
-                  <div className="text-xs mt-1 text-gray-400">
-                    • "Help me structure a web app"<br/>
-                    • "What features should I include?"<br/>
-                    • "Break this down into requirements"
-                  </div>
+                  <div className="mb-2">Requirements Assistant</div>
+                  <div className="text-xs">I'll help you create structured requirements in REQ-001 format</div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -254,19 +291,34 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
                 </div>
               )}
             </div>
-          </div>
-        )}
-      </div>
 
-      {(mode === 'text' || mode === 'file') && (
-        <div className="p-4 border-t border-gray-700">
-          <button
-            onClick={handleRunClick}
-            disabled={isLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed"
-          >
-            {isLoading ? 'Processing...' : 'Run X-Flow Pipeline'}
-          </button>
+            {/* Chat Input Area */}
+            <div className="p-4 border-t border-gray-700">
+              <div className="flex gap-2">
+                <textarea
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleChatSubmit();
+                    }
+                  }}
+                  placeholder="Describe your project for structured requirements..."
+                  className="flex-1 bg-gray-700 text-white text-sm px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                  rows="2"
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={handleChatSubmit}
+                  disabled={!chatInput.trim() || isLoading}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm rounded font-medium"
+                >
+                  {isLoading ? '...' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
