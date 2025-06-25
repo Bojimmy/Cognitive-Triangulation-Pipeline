@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -101,14 +101,14 @@ const OutputNode = ({ data, selected }) => (
 );
 
 // Node types - defined outside component to prevent React Flow warnings
-const nodeTypes = useMemo(() => ({
+const nodeTypes = {
   analyst: AnalystNode,
   productManager: ProductManagerNode,
   taskManager: TaskManagerNode,
   scrumMaster: ScrumMasterNode,
   input: InputNode,
   output: OutputNode,
-}), []);
+};
 
 // Node Palette Data
 const nodeTypesData = [
@@ -495,7 +495,7 @@ export default function App() {
             right: 0,
             bottom: 0,
             width: '100%', 
-            height: '100vh'
+            height: '100%'
           }}
         >
           <ReactFlow
