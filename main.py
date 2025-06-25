@@ -66,8 +66,18 @@ class AnalystXAgent(BaseXAgent):
         """Detect document domain and type"""
         content = etree.tostring(parsed_input, encoding='unicode', method='text').lower()
         
-        # Simple domain detection
-        if any(word in content for word in ['canvas', 'visual', 'workflow', 'drag']):
+        # Enhanced domain detection with business-specific intelligence
+        if any(word in content for word in ['support', 'ticket', 'helpdesk', 'customer service', 'agent']):
+            domain = 'customer_support'
+        elif any(word in content for word in ['ecommerce', 'e-commerce', 'shopping', 'payment', 'cart', 'product']):
+            domain = 'ecommerce'
+        elif any(word in content for word in ['mobile', 'app', 'ios', 'android', 'smartphone']):
+            domain = 'mobile_app'
+        elif any(word in content for word in ['healthcare', 'medical', 'patient', 'hospital', 'clinic', 'hipaa']):
+            domain = 'healthcare'
+        elif any(word in content for word in ['finance', 'banking', 'payment', 'financial', 'trading']):
+            domain = 'fintech'
+        elif any(word in content for word in ['canvas', 'visual', 'workflow', 'drag']):
             domain = 'visual_workflow'
         elif any(word in content for word in ['enterprise', 'compliance', 'security']):
             domain = 'enterprise'
@@ -148,8 +158,12 @@ class ProductManagerXAgent(BaseXAgent):
         requirements = []
         content_lower = content.lower()
         
-        # Domain-specific semantic analysis for traffic management systems
-        if any(term in content_lower for term in ['traffic', 'transportation', 'smart city', 'municipal', 'emergency']):
+        # Domain-specific semantic analysis for customer support systems
+        if any(term in content_lower for term in ['support', 'ticket', 'helpdesk', 'customer service', 'agent']):
+            requirements.extend(self._extract_customer_support_requirements(content))
+        
+        # Domain-specific analysis for traffic management systems
+        elif any(term in content_lower for term in ['traffic', 'transportation', 'smart city', 'municipal', 'emergency']):
             requirements.extend(self._extract_traffic_management_requirements(content))
         
         # Domain-specific analysis for enterprise systems
@@ -171,6 +185,95 @@ class ProductManagerXAgent(BaseXAgent):
         unique_requirements = self._deduplicate_and_prioritize(requirements)
         
         return unique_requirements[:8]  # Limit to 8 high-quality requirements
+    
+    def _extract_customer_support_requirements(self, content: str) -> list:
+        """Extract customer support system specific requirements"""
+        requirements = []
+        content_lower = content.lower()
+        
+        # Core ticketing system
+        if any(term in content_lower for term in ['ticket', 'support', 'helpdesk', 'case']):
+            requirements.append({
+                'title': 'Intelligent Ticket Management and Routing System',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Agent management
+        if any(term in content_lower for term in ['agent', 'staff', 'representative', 'operator']):
+            requirements.append({
+                'title': 'Support Agent Dashboard and Workload Management',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Escalation workflows
+        if any(term in content_lower for term in ['escalation', 'escalate', 'priority', 'urgent']):
+            requirements.append({
+                'title': 'Automated Escalation and Priority Management System',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Knowledge base
+        if any(term in content_lower for term in ['knowledge', 'knowledge base', 'documentation', 'self-service']):
+            requirements.append({
+                'title': 'Self-Service Knowledge Base and FAQ System',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        # CRM integration
+        if any(term in content_lower for term in ['salesforce', 'crm', 'customer data', 'integration']):
+            requirements.append({
+                'title': 'CRM Integration and Customer Data Synchronization',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Telephony integration
+        if any(term in content_lower for term in ['phone', 'call', 'telephony', 'voice', 'pbx']):
+            requirements.append({
+                'title': 'Telephony System Integration and Call Management',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Analytics and reporting
+        if any(term in content_lower for term in ['analytics', 'report', 'dashboard', 'metric', 'kpi']):
+            requirements.append({
+                'title': 'Support Analytics and Performance Reporting Dashboard',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        # Volume handling
+        volume_match = re.search(r'(\d+,?\d*)\s*(?:monthly|per month|tickets)', content_lower)
+        if volume_match:
+            volume = volume_match.group(1)
+            requirements.append({
+                'title': f'High-Volume Ticket Processing ({volume} monthly capacity)',
+                'priority': 'high',
+                'category': 'non-functional'
+            })
+        
+        # Multi-channel support
+        if any(term in content_lower for term in ['email', 'chat', 'phone', 'social', 'channel']):
+            requirements.append({
+                'title': 'Multi-Channel Support (Email, Chat, Phone, Social Media)',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        # HIPAA compliance specifically
+        if any(term in content_lower for term in ['hipaa', 'healthcare', 'medical', 'patient']):
+            requirements.append({
+                'title': 'HIPAA Compliance and Healthcare Data Protection',
+                'priority': 'high',
+                'category': 'non-functional'
+            })
+        
+        return requirements
     
     def _extract_traffic_management_requirements(self, content: str) -> list:
         """Extract traffic management specific requirements"""
