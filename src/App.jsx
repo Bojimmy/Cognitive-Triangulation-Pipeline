@@ -458,7 +458,7 @@ export default function App() {
           )}
         </div>
         
-        <div className="w-full h-full" ref={reactFlowWrapper}
+        <div className="w-full h-full" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
