@@ -1,0 +1,149 @@
+"etree" is unknown import symbol
+(pyright-extended)
+Ln 14, Col 18
+Argument of type "float" cannot be assigned to parameter "value" of type "int" in function "__setitem__"   "float" is incompatible with "int"
+(pyright-extended)
+Ln 44, Col 9
+Expression of type "None" cannot be assigned to parameter of type "str"   "None" is incompatible with "str"
+(pyright-extended)
+Ln 125, Col 88
+Argument of type "str | Any" cannot be assigned to parameter "value" of type "None" in function "__setitem__"   Type "str | Any" cannot be assigned to type "None"     "str" is incompatible with "None"
+(pyright-extended)
+Ln 609, Col 17
+Argument of type "str | Any" cannot be assigned to parameter "value" of type "None" in function "__setitem__"   Type "str | Any" cannot be assigned to type "None"     "str" is incompatible with "None"
+(pyright-extended)
+Ln 619, Col 21
+SyntaxError: unindent does not match any outer indentation level
+(pyright-extended)
+Ln 794, Col 1
+Unindent amount does not match previous indent
+(pyright-extended)
+Ln 794, Col 17
+"base_points" is possibly unbound
+(pyright-extended)
+Ln 795, Col 36
+SyntaxError: unindent does not match any outer indentation level
+(pyright-extended)
+Ln 796, Col 1
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 796, Col 17
+Unindent amount does not match previous indent
+(pyright-extended)
+Ln 796, Col 17
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 796, Col 21
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 796, Col 22
+SyntaxError: Unexpected indentation
+(pyright-extended)
+Ln 797, Col 1
+"base_points" is possibly unbound
+(pyright-extended)
+Ln 797, Col 36
+SyntaxError: unindent does not match any outer indentation level
+(pyright-extended)
+Ln 800, Col 1
+Unindent amount does not match previous indent
+(pyright-extended)
+Ln 800, Col 17
+"pattern" is possibly unbound
+(pyright-extended)
+Ln 800, Col 20
+SyntaxError: unindent does not match any outer indentation level
+(pyright-extended)
+Ln 802, Col 1
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 802, Col 17
+Unindent amount does not match previous indent
+(pyright-extended)
+Ln 802, Col 17
+SyntaxError: Invalid annotated assignment target
+(pyright-extended)
+Ln 802, Col 22
+"pattern" is possibly unbound
+(pyright-extended)
+Ln 802, Col 22
+SyntaxError: Expected an expression
+(pyright-extended)
+Ln 802, Col 45
+SyntaxError: Unexpected indentation
+(pyright-extended)
+Ln 803, Col 1
+SyntaxError: unindent does not match any outer indentation level
+(pyright-extended)
+Ln 804, Col 1
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 804, Col 17
+Unindent amount does not match previous indent
+(pyright-extended)
+Ln 804, Col 17
+SyntaxError: Invalid annotated assignment target
+(pyright-extended)
+Ln 804, Col 22
+"pattern" is possibly unbound
+(pyright-extended)
+Ln 804, Col 22
+SyntaxError: Expected an expression
+(pyright-extended)
+Ln 804, Col 40
+SyntaxError: Unexpected indentation
+(pyright-extended)
+Ln 805, Col 1
+SyntaxError: unindent does not match any outer indentation level
+(pyright-extended)
+Ln 806, Col 1
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 806, Col 17
+Unindent amount does not match previous indent
+(pyright-extended)
+Ln 806, Col 17
+SyntaxError: Invalid annotated assignment target
+(pyright-extended)
+Ln 806, Col 22
+"pattern" is possibly unbound
+(pyright-extended)
+Ln 806, Col 22
+SyntaxError: Expected an expression
+(pyright-extended)
+Ln 806, Col 44
+SyntaxError: Unexpected indentation
+(pyright-extended)
+Ln 807, Col 1
+SyntaxError: unindent does not match any outer indentation level
+(pyright-extended)
+Ln 808, Col 1
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 808, Col 17
+Unindent amount does not match previous indent
+(pyright-extended)
+Ln 808, Col 17
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 808, Col 21
+SyntaxError: Expected a statement
+(pyright-extended)
+Ln 808, Col 22
+SyntaxError: Unexpected indentation
+(pyright-extended)
+Ln 809, Col 1
+"pattern" is possibly unbound
+(pyright-extended)
+Ln 809, Col 37
+SyntaxError: unindent does not match any outer indentation level
+(pyright-extended)
+Ln 812, Col 1
+Unindent amount does not match previous indent
+(pyright-extended)
+Ln 812, Col 17
+SyntaxError: Unexpected indentation
+(pyright-extended)
+Ln 814, Col 1
+Unexpected indentation
+(pyright-extended)
