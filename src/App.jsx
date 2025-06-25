@@ -463,7 +463,7 @@ export default function App() {
       <NodePalette />
 
       {/* Column 2: The Main Canvas (takes up the most space) */}
-      <div className="flex-1 relative h-screen">
+      <div className="flex-1 relative" style={{ height: '100vh', minHeight: '600px' }}>
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           {selectedNodes.length > 0 && (
             <button
@@ -475,7 +475,11 @@ export default function App() {
           )}
         </div>
 
-        <div className="w-full h-full" ref={reactFlowWrapper}>
+        <div 
+          className="w-full h-full" 
+          ref={reactFlowWrapper}
+          style={{ width: '100%', height: '100%', minHeight: '600px' }}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
