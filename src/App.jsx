@@ -474,7 +474,7 @@ export default function App() {
       <NodePalette />
 
       {/* Column 2: The Main Canvas (takes up the most space) */}
-      <div className="flex-1 relative min-w-0" style={{ height: '100vh' }}>
+      <div className="flex-1 relative min-w-0">
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           {selectedNodes.length > 0 && (
             <button
@@ -488,7 +488,7 @@ export default function App() {
 
         <div 
           ref={reactFlowWrapper}
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: '100%', height: '100vh', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         >
           <ReactFlow
             nodes={nodes}
@@ -503,7 +503,6 @@ export default function App() {
             nodeTypes={nodeTypes}
             fitView
             className="bg-slate-50"
-            style={{ width: '100%', height: '100%' }}
           >
             <MiniMap />
             <Controls />

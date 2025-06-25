@@ -13,13 +13,18 @@ html, body, #root {
 
 /* React Flow specific styles */
 .react-flow__container {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .react-flow__wrapper {
-  width: 100%;
-  height: 100%;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.react-flow__renderer {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .react-flow__node {
