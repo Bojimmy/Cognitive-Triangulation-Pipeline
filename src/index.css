@@ -11,18 +11,27 @@ html, body, #root {
   overflow: hidden;
 }
 
-/* React Flow specific styles */
+/* React Flow specific styles - force proper dimensions */
 .react-flow__container {
   width: 100% !important;
   height: 100% !important;
+  min-height: 500px !important;
 }
 
 .react-flow__wrapper {
   width: 100% !important;
   height: 100% !important;
+  min-height: 500px !important;
 }
 
 .react-flow__renderer {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 500px !important;
+}
+
+/* Ensure parent containers have proper dimensions */
+.react-flow__renderer-wrapper {
   width: 100% !important;
   height: 100% !important;
 }
