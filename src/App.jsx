@@ -328,6 +328,27 @@ const initialEdges = [
   },
 ];
 
+// Utility function to escape XML special characters
+const escapeXml = (unsafe) => {
+  return unsafe.replace(/[<>&'"]/g, function (c) {
+    switch (c) {
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '&': return '&amp;';
+      case '\'': return '&apos;';
+      case '"': return '&quot;';
+      default: return c;
+    }
+  });
+}
+
+// Utility function to generate initial XML structure
+const generateInitialXml = (inputText) => {
+  const escapedInputText = escapeXml(inputText);
+
+  return `<input><text>${escapedInputText}</text></input>`;
+};
+
 export default function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -406,13 +427,19 @@ export default function App() {
     setIsLoading(true);
     setResultData(null);
 
+    // Use the utility function to create a clean, valid XML string
+    const xmlString = generateInitialXml(inputText);
+
+    console.log("--- Sending Sanitized XML to Backend ---");
+    console.log(xmlString);
+
     try {
       const response = await fetch('/api/process', {
         method: 'POST',
         headers: {
-          'Content-Type': 'text/plain',
+          'Content-Type': 'application/xml',
         },
-        body: inputText
+        body: xmlString,
       });
 
       if (!response.ok) {
