@@ -1,0 +1,63 @@
+Between [Your Staging Company Name] and Hudsons Furniture Company
+
+Executive Summary
+This proposal outlines a mutually beneficial exclusive par...
+INFO:__main__:🚀 Starting X-Agent pipeline execution...
+INFO:__main__:🔍 Step 1: Document Analysis (runs once)
+INFO:__main__:📋 Step 2: Starting PM → Task Manager → Scrum Master cycle
+INFO:__main__:
+--- Iteration 1 ---
+INFO:__main__:📋 Product Manager: Creating/updating requirements
+ERROR:__main__:API error: xmlParseEntityRef: no name, line 11, column 25 (<string>, line 11)
+Traceback (most recent call last):
+  File "/home/runner/workspace/main.py", line 1328, in process_document
+    result = pipeline.execute(document_content)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 1009, in execute
+    pm_output = self.product_manager.process(current_input)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 44, in process
+    parsed = etree.fromstring(input_xml.encode())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "src/lxml/etree.pyx", line 3257, in lxml.etree.fromstring
+  File "src/lxml/parser.pxi", line 1916, in lxml.etree._parseMemoryDocument
+  File "src/lxml/parser.pxi", line 1803, in lxml.etree._parseDoc
+  File "src/lxml/parser.pxi", line 1144, in lxml.etree._BaseParser._parseDoc
+  File "src/lxml/parser.pxi", line 618, in lxml.etree._ParserContext._handleParseResultDoc
+  File "src/lxml/parser.pxi", line 728, in lxml.etree._handleParseResult
+  File "src/lxml/parser.pxi", line 657, in lxml.etree._raiseParseError
+  File "<string>", line 11
+lxml.etree.XMLSyntaxError: xmlParseEntityRef: no name, line 11, column 25
+INFO:werkzeug:127.0.0.1 - - [25/Jun/2025 22:17:27] "POST /api/process HTTP/1.1" 500 -
+INFO:__main__:📥 Received document content: <input><text>Exclusive Home Staging Partnership Proposal
+Between [Your Staging Company Name] and Hudsons Furniture Company
+
+Executive Summary
+This proposal outlines a mutually beneficial exclusive par...
+INFO:__main__:🚀 Starting X-Agent pipeline execution...
+INFO:__main__:🔍 Step 1: Document Analysis (runs once)
+INFO:__main__:📋 Step 2: Starting PM → Task Manager → Scrum Master cycle
+INFO:__main__:
+--- Iteration 1 ---
+INFO:__main__:📋 Product Manager: Creating/updating requirements
+ERROR:__main__:API error: xmlParseEntityRef: no name, line 11, column 25 (<string>, line 11)
+Traceback (most recent call last):
+  File "/home/runner/workspace/main.py", line 1328, in process_document
+    result = pipeline.execute(document_content)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 1009, in execute
+    pm_output = self.product_manager.process(current_input)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 44, in process
+    parsed = etree.fromstring(input_xml.encode())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "src/lxml/etree.pyx", line 3257, in lxml.etree.fromstring
+  File "src/lxml/parser.pxi", line 1916, in lxml.etree._parseMemoryDocument
+  File "src/lxml/parser.pxi", line 1803, in lxml.etree._parseDoc
+  File "src/lxml/parser.pxi", line 1144, in lxml.etree._BaseParser._parseDoc
+  File "src/lxml/parser.pxi", line 618, in lxml.etree._ParserContext._handleParseResultDoc
+  File "src/lxml/parser.pxi", line 728, in lxml.etree._handleParseResult
+  File "src/lxml/parser.pxi", line 657, in lxml.etree._raiseParseError
+  File "<string>", line 11
+lxml.etree.XMLSyntaxError: xmlParseEntityRef: no name, line 11, column 25
+INFO:werkzeug:127.0.0.1 - - [25/Jun/2025 22:17:39] "POST /api/process HTTP/1.1" 500 -
