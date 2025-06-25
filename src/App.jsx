@@ -457,7 +457,7 @@ export default function App() {
         }
     } catch (error) {
       console.error('Error:', error);
-      setResultData(`Error: ${error.message}\n\nMake sure the Flask backend is running on port 5002`);
+      setResultData(`Error: ${error.message}\n\nMake sure the Flask backend is running on port 5000`);
     } finally {
       setIsLoading(false);
     }
