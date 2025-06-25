@@ -410,9 +410,9 @@ export default function App() {
       const response = await fetch('/api/process', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ text: inputText })
+        body: inputText
       });
 
       if (!response.ok) {

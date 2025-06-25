@@ -525,13 +525,8 @@ pipeline = XAgentPipeline()
 def process_document():
     """Process document through X-Agent pipeline with feedback loop"""
     try:
-        input_data = request.get_json()
-        
-        if not input_data:
-            return jsonify({"error": "No JSON data provided"}), 400
-        
-        # Extract text from different possible field names
-        document_content = input_data.get('text') or input_data.get('document') or input_data.get('content', '')
+        # Read raw text from request body
+        document_content = request.data.decode('utf-8')
         
         if not document_content or not document_content.strip():
             return jsonify({"error": "No document content provided"}), 400
