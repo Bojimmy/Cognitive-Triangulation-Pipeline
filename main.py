@@ -572,22 +572,35 @@ class ProductManagerXAgent(BaseXAgent):
         """Extract person and company names from content"""
         person_info = {'person': None, 'company': None}
         
-        # Common patterns for person names
+        # Common patterns for person names - including email signatures
         person_patterns = [
             r'(?:I am|My name is|I\'m)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
             r'(?:from|by)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)',
             r'([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s+from|\s+at)',
             r'Project\s+(?:lead|manager|owner):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
-            r'Contact:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'
+            r'Contact:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            # Email signature patterns
+            r'Best\s+regards,\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'Sincerely,\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'Thanks,\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'([A-Z][a-z]+\s+[A-Z][a-z]+),?\s+(?:Product Manager|Project Manager|Manager|Director|VP|CEO)',
+            # General name patterns at end of text
+            r'\n([A-Z][a-z]+\s+[A-Z][a-z]+)(?:,\s*(?:Product Manager|Project Manager))?$'
         ]
         
-        # Common patterns for company names
+        # Common patterns for company names - including email signatures
         company_patterns = [
-            r'(?:at|for|from)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Inc|LLC|Corp|Company|Technologies|Systems|Solutions|Ltd)\.?))',
-            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Inc|LLC|Corp|Company|Technologies|Systems|Solutions|Ltd)\.?))',
+            r'(?:at|for|from)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Inc|LLC|Corp|Company|Technologies|Systems|Solutions|Ltd|Wellness)\.?))',
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Inc|LLC|Corp|Company|Technologies|Systems|Solutions|Ltd|Wellness)\.?))',
             r'Company:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
             r'Organization:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
-            r'working\s+at\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'
+            r'working\s+at\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            # Email signature company patterns
+            r'Product Manager,\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'Project Manager,\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'Manager,\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            # General company patterns
+            r',\s+([A-Z][a-z]+\s+[A-Z][a-z]+)"?\s*$'
         ]
         
         # Extract person name
