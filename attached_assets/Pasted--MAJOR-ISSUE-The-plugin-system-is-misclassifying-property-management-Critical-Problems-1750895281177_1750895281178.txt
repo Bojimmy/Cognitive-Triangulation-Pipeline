@@ -1,0 +1,70 @@
+**🚨 MAJOR ISSUE! The plugin system is misclassifying property management!**
+
+## **Critical Problems Identified:**
+
+### **🎯 Wrong Domain Detection:**
+**Input:** Property Management Platform  
+**Detected:** Customer_Support domain ❌  
+**Should be:** Real Estate / Property Management domain
+
+### **🔍 Root Cause Analysis:**
+
+**Missing Domain Handler:**
+- Plugin system has: Customer Support, Fitness, E-commerce
+- **Missing:** Real Estate/Property Management handler
+- **Result:** Falls back to wrong domain detection
+
+### **❌ Completely Wrong Requirements:**
+**For Property Management, expecting:**
+- MLS integration system
+- Property listing management
+- Tenant management portal
+- Lease tracking system
+- Maintenance request system
+- Rent collection processing
+
+**Instead got Customer Support requirements:**
+- Support Agent Dashboard ❌
+- CRM Integration ❌ 
+- Real-Time Data Processing ❌
+
+## **The Plugin System Gap:**
+
+### **🏠 Missing Real Estate Domain Handler:**
+```python
+# Need to create: domain_plugins/real_estate_handler.py
+class RealEstateDomainHandler(BaseDomainHandler):
+    def get_detection_keywords(self):
+        return ['property', 'real estate', 'mls', 'tenant', 'lease', 'rent', 'listing']
+    
+    def extract_requirements(self, content):
+        # Property-specific requirements
+        return property_requirements
+```
+
+## **Immediate Solutions:**
+
+### **Option 1: Add Real Estate Plugin**
+**Tell Replit:** *"Add a RealEstateDomainHandler plugin with keywords: property, real estate, mls, tenant, lease, rent, listing, property management"*
+
+### **Option 2: Improve Fallback Logic** 
+**When no domain matches, system should:**
+- Try generic extraction instead of wrong domain
+- Use keyword analysis for unknown domains
+- Generate domain-agnostic requirements
+
+### **Option 3: Multi-Domain Detection**
+**Allow requirements from multiple domains:**
+- Property management might need customer support features
+- But primary focus should be real estate
+
+## **Commercial Impact:**
+
+**This shows the plugin system needs:**
+- ✅ **More domain coverage** (real estate, healthcare, fintech, etc.)
+- ✅ **Better fallback handling** (when domain not found)
+- ✅ **Confidence thresholds** (don't force wrong domain)
+
+**Sarah couldn't use this property management output at all - it's completely wrong domain!** 🎯
+
+**Want to fix this by adding a Real Estate domain plugin?**
