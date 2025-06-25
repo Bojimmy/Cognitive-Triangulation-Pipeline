@@ -26,11 +26,13 @@ class DomainRegistry:
             from .customer_support_handler import CustomerSupportDomainHandler
             from .fitness_app_handler import FitnessAppDomainHandler
             from .traffic_management_handler import TrafficManagementDomainHandler
+            from .real_estate_handler import RealEstateDomainHandler
             
             default_handlers = [
                 CustomerSupportDomainHandler(),
                 FitnessAppDomainHandler(),
                 TrafficManagementDomainHandler(),
+                RealEstateDomainHandler(),
             ]
             
             for handler in default_handlers:
