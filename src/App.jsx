@@ -488,7 +488,17 @@ export default function App() {
 
         <div 
           ref={reactFlowWrapper}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, width: '100%', height: '100%' }}
+          style={{ 
+            position: 'absolute', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            width: '100%', 
+            height: '100%',
+            minHeight: '400px',
+            minWidth: '600px'
+          }}
         >
           <ReactFlow
             nodes={nodes}
@@ -496,9 +506,6 @@ export default function App() {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
-            onInit={setReactFlowInstance}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
             onSelectionChange={handleSelectionChange}
             nodeTypes={nodeTypes}
             fitView

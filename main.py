@@ -689,7 +689,7 @@ class ProductManagerXAgent(BaseXAgent):
         # Apply feedback to create updated requirements
         return self._extract_requirements(domain, original_content, feedback)
 
-    def _apply_feedback_to_requirements(self, requirements: list, feedback: str) -> list:
+    def _apply_feedback_to_requirements(self, self, requirements: list, feedback: str) -> list:
         """Apply Scrum Master feedback to adjust requirements"""
 
         if 'reduce scope' in feedback.lower():
@@ -784,8 +784,7 @@ class TaskManagerXAgent(BaseXAgent):
         requirements = parsed_input.findall('.//Requirement')
         feedback_applied = parsed_input.find('FeedbackApplied') is not None
 
-        if feedback_applied:
-            logger.info(f"[Task Manager] Processing updated requirements ({len(requirements)} requirements)")
+        if feedback_applied:        logger.info(f"[Task Manager] Processing updated requirements ({len(requirements)} requirements)")
 
         tasks = []
         task_id = 1
@@ -998,13 +997,27 @@ class XAgentPipeline:
 
     def debug_xml_content(self, content):
         lines = content.split('\n')
-        if len(lines) >= 11:
-            line_11 = lines[10]  # 0-indexed
-            print(f"Line 11: '{line_11}'")
-            if len(line_11) >= 25:
-                char_25 = line_11[24]  # 0-indexed  
+        print(f"Total lines in XML: {len(lines)}")
+
+        # Print lines around line 11
+        for i in range(max(0, 8), min(len(lines), 15)):
+            line_num = i + 1
+            line = lines[i]
+            marker = " <-- PROBLEM LINE" if line_num == 11 else ""
+            print(f"Line {line_num}: '{line}'{marker}")
+
+            if line_num == 11 and len(line) >= 25:
+                char_25 = line[24]  # 0-indexed  
                 print(f"Character 25: '{char_25}' (ASCII: {ord(char_25)})")
-                print(f"Context: '{line_11[20:30]}'")
+                print(f"Context around char 25: '{line[20:30]}'")
+
+                # Check for unescaped ampersands
+                ampersand_positions = [pos for pos, char in enumerate(line) if char == '&']
+                if ampersand_positions:
+                    print(f"Ampersand positions in line 11: {ampersand_positions}")
+                    for pos in ampersand_positions:
+                        context = line[max(0, pos-5):pos+10]
+                        print(f"  Ampersand at position {pos}: '{context}'")
 
     def execute(self, document_content: str) -> dict:
         """Execute pipeline with PM-Scrum Master feedback loop"""
@@ -1013,11 +1026,10 @@ class XAgentPipeline:
         # Step 1: Analyst runs once - properly escape XML content
         escaped_content = self._escape_xml_content(document_content)
         document_xml = f"<?xml version='1.0' encoding='UTF-8'?><Document>{escaped_content}</Document>"
-        
+
         # Debug the XML content before parsing
         logger.info("🔍 Debugging XML content...")
-        self.debug_xml_content(document_xml)
-        
+
         analysis_xml = self.analyst.process(document_xml)
 
         logger.info("📋 Step 2: Starting PM → Task Manager → Scrum Master cycle")
