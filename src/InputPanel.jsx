@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
-const InputPanel = ({ onRunPipeline, isLoading }) => {
+const InputPanel = ({ onRunPipeline, isLoading, finalOutput }) => {
   const [text, setText] = useState('');
   const [mode, setMode] = useState('text'); // 'text', 'file', 'chat'
   const [chatHistory, setChatHistory] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [showChatPopup, setShowChatPopup] = useState(false);
+  const [fileName, setFileName] = useState('');
 
   const handleRunClick = () => {
     if (!text.trim() || isLoading) return;
@@ -18,8 +19,31 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setText(e.target.result);
+        setFileName(file.name);
       };
       reader.readAsText(file);
+    }
+  };
+
+  const handleDownload = () => {
+    const contentToDownload = finalOutput || text;
+    if (!contentToDownload.trim()) return;
+
+    const blob = new Blob([contentToDownload], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = finalOutput ? 'approved-output.xml' : (fileName || 'document.txt');
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
+  const handleLoadOutput = () => {
+    if (finalOutput) {
+      setText(finalOutput);
+      setFileName('approved-output.xml');
     }
   };
 
@@ -174,13 +198,35 @@ I need a mobile app for task management with user authentication, offline sync, 
 
         {mode === 'file' && (
           <>
-            <label className="mb-2 text-sm font-medium text-gray-300">
-              Upload Document
-            </label>
-            <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center mb-4">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-300">
+                File Operations
+              </label>
+              <div className="flex gap-2">
+                {finalOutput && (
+                  <button
+                    onClick={handleLoadOutput}
+                    className="px-2 py-1 bg-green-600 hover:bg-green-700 text-white text-xs rounded"
+                    title="Load approved output"
+                  >
+                    📋 Load Output
+                  </button>
+                )}
+                <button
+                  onClick={handleDownload}
+                  disabled={!text.trim()}
+                  className="px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs rounded"
+                  title="Download current content"
+                >
+                  💾 Download
+                </button>
+              </div>
+            </div>
+            
+            <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center mb-4">
               <input
                 type="file"
-                accept=".txt,.md,.doc,.docx"
+                accept=".txt,.md,.doc,.docx,.xml"
                 onChange={handleFileUpload}
                 className="hidden"
                 id="file-upload"
@@ -188,14 +234,21 @@ I need a mobile app for task management with user authentication, offline sync, 
               <label htmlFor="file-upload" className="cursor-pointer">
                 <div className="text-gray-400 mb-2">📁</div>
                 <div className="text-sm text-gray-300">Click to upload document</div>
-                <div className="text-xs text-gray-500 mt-1">Supports .txt, .md, .doc, .docx</div>
+                <div className="text-xs text-gray-500 mt-1">Supports .txt, .md, .doc, .docx, .xml</div>
               </label>
             </div>
+
+            {fileName && (
+              <div className="mb-2 text-xs text-gray-400">
+                Current file: {fileName}
+              </div>
+            )}
+
             <textarea
               className="w-full flex-grow bg-gray-900 rounded-md p-3 text-sm text-gray-200 resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Uploaded content will appear here..."
+              placeholder="Upload a document or paste content here..."
             />
           </>
         )}

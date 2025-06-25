@@ -516,54 +516,7 @@ export default function App() {
       {/* Column 3: Input and Results Panels */}
       <div className="w-96 flex flex-col border-l border-slate-200">
         <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} />
-        {/* Right Panel - Process/Output Tabs */}
-      <div className="w-full flex flex-col">
-        {/* Tab Navigation */}
-        <div className="flex border-b border-gray-700 bg-gray-800">
-          <button
-            onClick={() => setActiveTab('process')}
-            className={`flex-1 px-4 py-2 text-sm font-medium ${
-              activeTab === 'process' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            🔄 Processing Pipeline
-          </button>
-          <button
-            onClick={() => setActiveTab('output')}
-            className={`flex-1 px-4 py-2 text-sm font-medium ${
-              activeTab === 'output' ? 'bg-gray-700 text-white' : 'text-gray-400 hover:text-gray-200'
-            }`}
-          >
-            📋 Final Output
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        <div className="flex-1">
-          {activeTab === 'process' ? (
-            <ResultsPanel resultData={resultData} isLoading={isLoading} />
-          ) : (
-            <div className="h-full bg-gray-700 text-gray-200 overflow-hidden flex flex-col">
-              <div className="p-4 border-b border-gray-700">
-                <h3 className="text-lg font-semibold text-white">Final Approved Output</h3>
-              </div>
-              <div className="flex-1 p-4 overflow-y-auto">
-                {finalOutput ? (
-                  <pre className="text-sm text-gray-200 whitespace-pre-wrap font-mono bg-gray-800 p-3 rounded">
-                    {finalOutput}
-                  </pre>
-                ) : (
-                  <div className="text-center text-gray-500 mt-8">
-                    <div className="text-4xl mb-4">✅</div>
-                    <div className="text-lg mb-2">Awaiting Final Approval</div>
-                    <div className="text-sm">Complete the pipeline process to see approved output</div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+        <ResultsPanel resultData={resultData} isLoading={isLoading} />
       </div>
     </div>
   );
