@@ -24,46 +24,59 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
   };
 
   const handleChatSubmit = async () => {
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || isLoading) return;
     
+    const userMessage = chatInput;
     const newMessage = {
       type: 'user',
-      content: chatInput,
+      content: userMessage,
       timestamp: new Date().toLocaleTimeString()
     };
     
     setChatHistory(prev => [...prev, newMessage]);
     setChatInput('');
     
+    // Add typing indicator
+    const typingMessage = {
+      type: 'ai',
+      content: '🤖 Thinking...',
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setChatHistory(prev => [...prev, typingMessage]);
+    
     try {
-      // Call your backend LLM endpoint
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: chatInput,
+          message: userMessage,
           history: chatHistory
         })
       });
       
       const data = await response.json();
       
-      const aiResponse = {
-        type: 'ai',
-        content: data.response || 'Sorry, I encountered an error processing your request.',
-        timestamp: new Date().toLocaleTimeString()
-      };
-      setChatHistory(prev => [...prev, aiResponse]);
+      // Remove typing indicator and add real response
+      setChatHistory(prev => {
+        const withoutTyping = prev.slice(0, -1);
+        return [...withoutTyping, {
+          type: 'ai',
+          content: data.response || 'Sorry, I encountered an error processing your request.',
+          timestamp: new Date().toLocaleTimeString()
+        }];
+      });
     } catch (error) {
       console.error('Chat error:', error);
-      const errorResponse = {
-        type: 'ai',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date().toLocaleTimeString()
-      };
-      setChatHistory(prev => [...prev, errorResponse]);
+      setChatHistory(prev => {
+        const withoutTyping = prev.slice(0, -1);
+        return [...withoutTyping, {
+          type: 'ai',
+          content: 'Sorry, I encountered an error. Please try again later.',
+          timestamp: new Date().toLocaleTimeString()
+        }];
+      });
     }
   };
 
@@ -155,65 +168,88 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
         )}
 
         {mode === 'chat' && (
-          <>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-medium text-gray-300">
-                Requirements Chat
-              </label>
-              <div className="space-x-2">
+          <div className="flex flex-col h-full">
+            {/* Chat Header */}
+            <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
+              <h3 className="text-sm font-medium text-gray-300">
+                🤖 Requirements Assistant
+              </h3>
+              <div className="flex gap-2">
                 {chatHistory.length > 0 && (
                   <button
                     onClick={generateFromChat}
-                    className="text-xs px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-white"
+                    className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-white text-xs"
                   >
                     Use for Pipeline
                   </button>
                 )}
                 <button
                   onClick={clearChat}
-                  className="text-xs px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-white"
+                  className="px-2 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-xs"
                 >
                   Clear
                 </button>
               </div>
             </div>
-            
-            <div className="flex-grow bg-gray-900 rounded-md p-3 overflow-y-auto mb-3">
+
+            {/* Chat Messages Area */}
+            <div className="flex-1 bg-gray-900 rounded-lg p-4 overflow-y-auto mb-3 min-h-0">
               {chatHistory.length === 0 ? (
-                <div className="text-gray-500 text-sm">
-                  Ask questions about your project requirements...
+                <div className="text-center text-gray-500 text-sm mt-12">
+                  <div className="text-3xl mb-3">💬</div>
+                  <div className="mb-2">Welcome to Requirements Chat!</div>
+                  <div className="text-xs">Ask questions like:</div>
+                  <div className="text-xs mt-1 text-gray-400">
+                    • "Help me structure a web app"<br/>
+                    • "What features should I include?"<br/>
+                    • "Break this down into requirements"
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {chatHistory.map((msg, idx) => (
-                    <div key={idx} className={`${msg.type === 'user' ? 'text-blue-300' : 'text-green-300'}`}>
-                      <div className="text-xs text-gray-500 mb-1">
-                        {msg.type === 'user' ? '👤 You' : '🤖 AI'} - {msg.timestamp}
+                    <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`max-w-xs px-3 py-2 rounded-lg ${
+                        msg.type === 'user' 
+                          ? 'bg-blue-600 text-white' 
+                          : 'bg-gray-700 text-gray-200'
+                      }`}>
+                        <div className="text-xs opacity-70 mb-1">
+                          {msg.type === 'user' ? '👤 You' : '🤖 AI'} • {msg.timestamp}
+                        </div>
+                        <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
                       </div>
-                      <div className="text-sm">{msg.content}</div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleChatSubmit()}
-                placeholder="Ask about requirements..."
-                className="flex-1 bg-gray-700 text-white text-sm px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
-              <button
-                onClick={handleChatSubmit}
-                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded"
-              >
-                Send
-              </button>
+
+            {/* Chat Input Area */}
+            <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleChatSubmit()}
+                  placeholder="Type your question about requirements..."
+                  className="flex-1 bg-gray-700 text-white text-sm px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={handleChatSubmit}
+                  disabled={!chatInput.trim() || isLoading}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm rounded font-medium"
+                >
+                  {isLoading ? '...' : 'Send'}
+                </button>
+              </div>
+              <div className="text-xs text-gray-500 mt-2">
+                Press Enter to send • Shift+Enter for new line
+              </div>
             </div>
-          </>
+          </div>
         )}
       </div>
 

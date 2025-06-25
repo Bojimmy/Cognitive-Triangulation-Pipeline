@@ -475,7 +475,7 @@ export default function App() {
           )}
         </div>
 
-        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }}>
+        <div className="w-full h-full" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -489,7 +489,6 @@ export default function App() {
             nodeTypes={nodeTypes}
             fitView
             attributionPosition="top-right"
-            style={{ width: '100%', height: '100%' }}
           >
             <MiniMap />
             <Controls />
