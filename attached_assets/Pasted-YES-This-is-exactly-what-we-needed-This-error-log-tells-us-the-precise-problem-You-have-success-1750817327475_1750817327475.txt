@@ -1,0 +1,130 @@
+YES\! This is exactly what we needed\! This error log tells us the precise problem. You have successfully found the bug.
+
+This is a fantastic result. Let's break it down.
+
+### The Diagnosis
+
+Look at this specific line from your log:
+
+`ERROR:__main__:API error: xmlParseEntityRef: no name, line 32, column 89`
+
+This is a classic XML parsing error. It is definitive and tells us exactly what is wrong:
+
+1.  Your frontend successfully sent the request to the backend.
+2.  Your backend successfully started running the agent pipeline.
+3.  Then, one of the agents received an XML string that it could not parse because it contained an illegal character.
+
+The error `xmlParseEntityRef: no name` almost always means there is a "naked" ampersand character (`&`) somewhere in the text. Looking at the test document I gave you, the culprit is this line:
+
+"**Drag & Drop** Connections"
+
+XML is very strict. The `&` character is special and must be "escaped" as `&amp;` when it's part of the content. Your frontend is currently sending the raw `&`, which causes the Python `lxml` parser to crash.
+
+### The Solution: Sanitize the Input on the Frontend
+
+The fix is to ensure the React frontend properly "escapes" these special characters before it constructs the XML string to send to the backend.
+
+The good news is that the code we designed for `workflowUtils.ts` already does this\! You may be running a version of the application from before we added this critical piece.
+
+Let's make sure your frontend has the final, correct code.
+
+-----
+
+#### Step 1: Ensure `workflowUtils.ts` Exists and is Correct
+
+Please check that you have a file named `src/workflowUtils.ts` in your Replit project. Its entire purpose is to handle this exact problem. It should contain the following code:
+
+```ts
+// src/workflowUtils.ts
+
+import type { Node, Edge } from '@reactflow/core';
+
+// This function now correctly escapes XML special characters
+export const generateInitialXml = (documentText: string): string => {
+  // Escape the 5 special XML characters
+  const escapedText = documentText
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+
+  const finalXml = `<?xml version="1.0" encoding="UTF-8"?>
+<Document>${escapedText}</Document>`;
+
+  return finalXml;
+};
+```
+
+#### Step 2: Ensure `App.tsx` is Using the Utility
+
+Now, make sure your main `App.tsx` component is importing and using this function. This ensures that the text from the textarea is cleaned up *before* being sent.
+
+Here is the corrected `App.tsx` that uses the utility:
+
+```tsx
+// src/App.tsx
+
+import React from 'react';
+// ... other imports
+import { generateInitialXml } from './workflowUtils'; // Make sure to import it
+import InputPanel from './InputPanel';
+import ResultsPanel from './ResultsPanel';
+
+const App: React.FC = () => {
+  // ... all your other state and functions (useState, etc.)
+
+  const handleRunPipeline = async (inputText: string) => {
+    setIsLoading(true);
+    setResultData(null);
+
+    // Use the utility function to create a clean, valid XML string
+    const xmlString = generateInitialXml(inputText);
+
+    console.log("--- Sending Sanitized XML to Backend ---");
+    console.log(xmlString);
+
+    try {
+      const response = await fetch('/api/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/xml', // Send as XML
+        },
+        body: xmlString, // Send the sanitized XML string
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const resultXml = await response.text();
+      setResultData(resultXml);
+    } catch (error) {
+      console.error('Error:', error);
+      setResultData(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ... your main JSX return with the two-panel layout ...
+  return (
+    <div className="flex h-screen bg-gray-100">
+        <div className="w-1/3 flex flex-col">
+            <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} />
+        </div>
+        <div className="w-2/3 flex flex-col">
+            <ResultsPanel resultData={resultData} isLoading={isLoading} />
+        </div>
+    </div>
+  );
+};
+
+export default App;
+```
+
+*(Note: I've simplified the JSX in the example above to focus on the key logic. Use the layout we fixed previously.)*
+
+By ensuring `workflowUtils.ts` exists and that your `App.tsx` calls `generateInitialXml`, you will be sending a perfectly valid XML string to the backend. The `&` will be converted to `&amp;`, and the Python parser will no longer crash.
+
+After updating these frontend files, stop and **Run** your Repl again. The `500` error will be gone, and you should finally see a successful XML response from your agent pipeline. You've found the final bug\!
