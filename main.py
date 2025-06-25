@@ -880,11 +880,11 @@ def process_document():
         
         if result['success']:
             # Convert XML to natural language
-            natural_output = self._convert_xml_to_natural_language(result['final_output'], result['status'])
+            natural_output = _convert_xml_to_natural_language(result['final_output'], result['status'])
             return natural_output, 200, {'Content-Type': 'text/plain'}
         else:
             # Convert rejection to natural language
-            natural_output = self._convert_xml_to_natural_language(result['final_output'], result['status'])
+            natural_output = _convert_xml_to_natural_language(result['final_output'], result['status'])
             return natural_output, 200, {'Content-Type': 'text/plain'}
             
     except Exception as e:
