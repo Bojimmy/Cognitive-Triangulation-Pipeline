@@ -101,15 +101,15 @@ const OutputNode = ({ data, selected }) => (
   </div>
 );
 
-// Node types - memoized to prevent React Flow warnings
-const nodeTypes = React.useMemo(() => ({
+// Node types - defined outside component to prevent React Flow warnings
+const nodeTypes = {
   analyst: AnalystNode,
   productManager: ProductManagerNode,
   taskManager: TaskManagerNode,
   scrumMaster: ScrumMasterNode,
   input: InputNode,
   output: OutputNode,
-}), []);
+};
 
 // Node Palette Data
 const nodeTypesData = [
@@ -408,8 +408,15 @@ export default function App() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      setResultData(JSON.stringify(data, null, 2));
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await response.json();
+        setResultData(JSON.stringify(data, null, 2));
+      } else {
+        // Handle XML/text response from Flask backend
+        const textData = await response.text();
+        setResultData(textData);
+      }
     } catch (error) {
       console.error('Error:', error);
       setResultData(`Error: ${error.message}\n\nMake sure the Flask backend is running on port 5002`);
@@ -439,7 +446,7 @@ export default function App() {
           )}
         </div>
         
-        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100vh' }}>
+        <div className="w-full h-screen" ref={reactFlowWrapper} style={{ width: '100%', height: '100vh' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
