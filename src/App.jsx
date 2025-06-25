@@ -8,6 +8,8 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   MarkerType,
+  Handle,
+  Position,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import './App.css';
@@ -17,6 +19,7 @@ import ResultsPanel from './ResultsPanel';
 // Custom Node Components
 const AnalystNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-blue-500 border-2 ${selected ? 'border-blue-700' : 'border-blue-600'} min-w-[150px]`}>
+    <Handle type="target" position={Position.Left} />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">📊 Analyst</div>
@@ -24,11 +27,14 @@ const AnalystNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-blue-100 mt-1">{data.description}</div>
+    <Handle type="source" position={Position.Right} />
   </div>
 );
 
 const ProductManagerNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-green-500 border-2 ${selected ? 'border-green-700' : 'border-green-600'} min-w-[150px]`}>
+    <Handle type="target" position={Position.Left} />
+    <Handle type="target" position={Position.Top} id="feedback" />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">📋 Product Manager</div>
@@ -36,11 +42,13 @@ const ProductManagerNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-green-100 mt-1">{data.description}</div>
+    <Handle type="source" position={Position.Bottom} />
   </div>
 );
 
 const TaskManagerNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-purple-500 border-2 ${selected ? 'border-purple-700' : 'border-purple-600'} min-w-[150px]`}>
+    <Handle type="target" position={Position.Top} />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">📝 Task Manager</div>
@@ -48,11 +56,13 @@ const TaskManagerNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-purple-100 mt-1">{data.description}</div>
+    <Handle type="source" position={Position.Right} />
   </div>
 );
 
 const ScrumMasterNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-orange-500 border-2 ${selected ? 'border-orange-700' : 'border-orange-600'} min-w-[150px]`}>
+    <Handle type="target" position={Position.Left} />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">🎯 Scrum Master</div>
@@ -60,6 +70,8 @@ const ScrumMasterNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-orange-100 mt-1">{data.description}</div>
+    <Handle type="source" position={Position.Bottom} id="feedback" />
+    <Handle type="source" position={Position.Bottom} />
   </div>
 );
 
@@ -72,11 +84,13 @@ const InputNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-gray-200 mt-1">{data.description}</div>
+    <Handle type="source" position={Position.Right} />
   </div>
 );
 
 const OutputNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-red-500 border-2 ${selected ? 'border-red-700' : 'border-red-600'} min-w-[150px]`}>
+    <Handle type="target" position={Position.Top} />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">📤 Output</div>
@@ -290,7 +304,9 @@ const initialEdges = [
   {
     id: 'e5-3',
     source: '5',
+    sourceHandle: 'feedback',
     target: '3',
+    targetHandle: 'feedback',
     markerEnd: { type: MarkerType.ArrowClosed },
     style: { stroke: '#f59e0b' },
     label: 'feedback',
@@ -425,7 +441,7 @@ export default function App() {
           )}
         </div>
         
-        <div className="w-full h-full" ref={reactFlowWrapper}>
+        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100vh' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
