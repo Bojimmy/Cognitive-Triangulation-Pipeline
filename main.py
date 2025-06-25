@@ -996,6 +996,16 @@ class XAgentPipeline:
                 .replace('"', '&quot;')
                 .replace("'", '&apos;'))
 
+    def debug_xml_content(self, content):
+        lines = content.split('\n')
+        if len(lines) >= 11:
+            line_11 = lines[10]  # 0-indexed
+            print(f"Line 11: '{line_11}'")
+            if len(line_11) >= 25:
+                char_25 = line_11[24]  # 0-indexed  
+                print(f"Character 25: '{char_25}' (ASCII: {ord(char_25)})")
+                print(f"Context: '{line_11[20:30]}'")
+
     def execute(self, document_content: str) -> dict:
         """Execute pipeline with PM-Scrum Master feedback loop"""
 
@@ -1003,6 +1013,11 @@ class XAgentPipeline:
         # Step 1: Analyst runs once - properly escape XML content
         escaped_content = self._escape_xml_content(document_content)
         document_xml = f"<?xml version='1.0' encoding='UTF-8'?><Document>{escaped_content}</Document>"
+        
+        # Debug the XML content before parsing
+        logger.info("🔍 Debugging XML content...")
+        self.debug_xml_content(document_xml)
+        
         analysis_xml = self.analyst.process(document_xml)
 
         logger.info("📋 Step 2: Starting PM → Task Manager → Scrum Master cycle")
