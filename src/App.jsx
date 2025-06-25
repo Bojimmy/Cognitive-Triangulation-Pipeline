@@ -19,7 +19,7 @@ import ResultsPanel from './ResultsPanel';
 // Custom Node Components
 const AnalystNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-blue-500 border-2 ${selected ? 'border-blue-700' : 'border-blue-600'} min-w-[150px]`}>
-    <Handle type="target" position={Position.Left} />
+    <Handle type="target" position={Position.Left} id="input" />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">📊 Analyst</div>
@@ -27,13 +27,13 @@ const AnalystNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-blue-100 mt-1">{data.description}</div>
-    <Handle type="source" position={Position.Right} />
+    <Handle type="source" position={Position.Right} id="output" />
   </div>
 );
 
 const ProductManagerNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-green-500 border-2 ${selected ? 'border-green-700' : 'border-green-600'} min-w-[150px]`}>
-    <Handle type="target" position={Position.Left} />
+    <Handle type="target" position={Position.Left} id="input" />
     <Handle type="target" position={Position.Top} id="feedback" />
     <div className="flex items-center">
       <div className="ml-2">
@@ -42,13 +42,13 @@ const ProductManagerNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-green-100 mt-1">{data.description}</div>
-    <Handle type="source" position={Position.Bottom} />
+    <Handle type="source" position={Position.Bottom} id="output" />
   </div>
 );
 
 const TaskManagerNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-purple-500 border-2 ${selected ? 'border-purple-700' : 'border-purple-600'} min-w-[150px]`}>
-    <Handle type="target" position={Position.Top} />
+    <Handle type="target" position={Position.Top} id="input" />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">📝 Task Manager</div>
@@ -56,13 +56,13 @@ const TaskManagerNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-purple-100 mt-1">{data.description}</div>
-    <Handle type="source" position={Position.Right} />
+    <Handle type="source" position={Position.Right} id="output" />
   </div>
 );
 
 const ScrumMasterNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-orange-500 border-2 ${selected ? 'border-orange-700' : 'border-orange-600'} min-w-[150px]`}>
-    <Handle type="target" position={Position.Left} />
+    <Handle type="target" position={Position.Left} id="input" />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">🎯 Scrum Master</div>
@@ -71,7 +71,7 @@ const ScrumMasterNode = ({ data, selected }) => (
     </div>
     <div className="text-xs text-orange-100 mt-1">{data.description}</div>
     <Handle type="source" position={Position.Bottom} id="feedback" />
-    <Handle type="source" position={Position.Bottom} />
+    <Handle type="source" position={Position.Right} id="output" />
   </div>
 );
 
@@ -84,13 +84,13 @@ const InputNode = ({ data, selected }) => (
       </div>
     </div>
     <div className="text-xs text-gray-200 mt-1">{data.description}</div>
-    <Handle type="source" position={Position.Right} />
+    <Handle type="source" position={Position.Right} id="output" />
   </div>
 );
 
 const OutputNode = ({ data, selected }) => (
   <div className={`px-4 py-2 shadow-md rounded-md bg-red-500 border-2 ${selected ? 'border-red-700' : 'border-red-600'} min-w-[150px]`}>
-    <Handle type="target" position={Position.Top} />
+    <Handle type="target" position={Position.Top} id="input" />
     <div className="flex items-center">
       <div className="ml-2">
         <div className="text-lg font-bold text-white">📤 Output</div>
@@ -101,15 +101,15 @@ const OutputNode = ({ data, selected }) => (
   </div>
 );
 
-// Node types
-const nodeTypes = {
+// Node types - memoized to prevent React Flow warnings
+const nodeTypes = React.useMemo(() => ({
   analyst: AnalystNode,
   productManager: ProductManagerNode,
   taskManager: TaskManagerNode,
   scrumMaster: ScrumMasterNode,
   input: InputNode,
   output: OutputNode,
-};
+}), []);
 
 // Node Palette Data
 const nodeTypesData = [
@@ -280,25 +280,33 @@ const initialEdges = [
   {
     id: 'e1-2',
     source: '1',
+    sourceHandle: 'output',
     target: '2',
+    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
   {
     id: 'e2-3',
     source: '2',
+    sourceHandle: 'output',
     target: '3',
+    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
   {
     id: 'e3-4',
     source: '3',
+    sourceHandle: 'output',
     target: '4',
+    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
   {
     id: 'e4-5',
     source: '4',
+    sourceHandle: 'output',
     target: '5',
+    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
   {
@@ -314,7 +322,9 @@ const initialEdges = [
   {
     id: 'e5-6',
     source: '5',
+    sourceHandle: 'output',
     target: '6',
+    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
 ];
@@ -414,7 +424,7 @@ export default function App() {
       setResultData(JSON.stringify(data, null, 2));
     } catch (error) {
       console.error('Error:', error);
-      setResultData(`Error: ${error.message}\n\nMake sure the Flask backend is running on port 5001`);
+      setResultData(`Error: ${error.message}\n\nMake sure the Flask backend is running on port 5002`);
     } finally {
       setIsLoading(false);
     }
@@ -441,7 +451,7 @@ export default function App() {
           )}
         </div>
         
-        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100vh' }}>
+        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
