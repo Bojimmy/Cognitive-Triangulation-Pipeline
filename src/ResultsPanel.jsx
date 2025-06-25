@@ -16,9 +16,55 @@ const ResultsPanel = ({ resultData, isLoading }) => {
             </div>
           </div>
         ) : resultData ? (
-          <pre className="text-sm text-gray-200 whitespace-pre-wrap font-mono bg-gray-800 p-3 rounded">
-            {resultData}
-          </pre>
+          <div className="space-y-4">
+            {/* Pipeline Step Indicator */}
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-sm font-semibold text-white mb-3">Pipeline Progress</h4>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="text-sm text-gray-300">📊 Analyst - Document Analysis Complete</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="text-sm text-gray-300">📋 Product Manager - Requirements Extracted</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="text-sm text-gray-300">🔧 Task Manager - Tasks Generated</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className={`w-2 h-2 rounded-full ${
+                    resultData.includes('approved="true"') ? 'bg-green-500' : 'bg-red-500'
+                  }`}></span>
+                  <span className="text-sm text-gray-300">
+                    ✅ PO Scrum Master - {resultData.includes('approved="true"') ? 'Approved' : 'Rejected (Feedback Provided)'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Detailed Results */}
+            <div className="bg-gray-800 p-4 rounded-lg">
+              <h4 className="text-sm font-semibold text-white mb-3">Detailed Results</h4>
+              <pre className="text-sm text-gray-200 whitespace-pre-wrap font-mono max-h-96 overflow-y-auto">
+                {resultData}
+              </pre>
+            </div>
+
+            {/* Interactive Chat Hint */}
+            {!resultData.includes('approved="true"') && (
+              <div className="bg-blue-900 border border-blue-700 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-blue-400">💡</span>
+                  <span className="text-sm font-semibold text-blue-300">Need Help?</span>
+                </div>
+                <p className="text-sm text-blue-200">
+                  Use the 💬 Chat tab to discuss requirements with the AI advisor and refine your project scope.
+                </p>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="text-center text-gray-500 mt-8">
             <div className="text-4xl mb-4">🤖</div>

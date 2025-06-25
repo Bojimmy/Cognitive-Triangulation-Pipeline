@@ -106,6 +106,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
       .join('\n\n');
     setText(chatText);
     setMode('text');
+    setShowChatPopup(false);
   };
 
   return (
@@ -130,13 +131,29 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
         </button>
         <button
           onClick={() => setShowChatPopup(true)}
-          className="flex-1 px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200"
+          className="flex-1 px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-200 relative"
         >
-          💬 Chat
+          💬 AI Advisor
+          {chatHistory.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-blue-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">
+              {chatHistory.filter(msg => msg.type === 'user').length}
+            </span>
+          )}
         </button>
       </div>
 
       <div className="flex-1 p-4 overflow-hidden flex flex-col">
+        {/* Workflow Guide */}
+        <div className="mb-4 p-3 bg-gray-900 rounded-lg border border-gray-600">
+          <h4 className="text-xs font-semibold text-gray-300 mb-2">🔄 X-Agent Workflow</h4>
+          <div className="text-xs text-gray-400 space-y-1">
+            <div>1. 📊 <strong>Analyst</strong> analyzes your input</div>
+            <div>2. 📋 <strong>Product Manager</strong> extracts requirements</div>
+            <div>3. 🔧 <strong>Task Manager</strong> breaks into tasks</div>
+            <div>4. ✅ <strong>PO Scrum Master</strong> approves or provides feedback</div>
+          </div>
+        </div>
+
         {mode === 'text' && (
           <>
             <label htmlFor="prd-input" className="mb-2 text-sm font-medium text-gray-300">
@@ -147,7 +164,10 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
               className="w-full flex-grow bg-gray-900 rounded-md p-3 text-sm text-gray-200 resize-none focus:ring-2 focus:ring-blue-500 focus:outline-none"
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Paste your project description here..."
+              placeholder="Describe your project requirements here...
+
+Example:
+I need a mobile app for task management with user authentication, offline sync, and real-time collaboration features."
             />
           </>
         )}
