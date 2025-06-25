@@ -67,11 +67,8 @@ class AnalystXAgent(BaseXAgent):
         content = etree.tostring(parsed_input, encoding='unicode', method='text').lower()
         
         # Enhanced domain detection with business-specific intelligence
-        # Staging & Real Estate (check first as it's very specific)
-        if any(word in content for word in ['staging', 'home staging', 'real estate', 'property staging', 'interior staging', 'furniture rental', 'home stager', 'realtor', 'property', 'listing', 'daytona', 'florida', 'east coast florida']):
-            domain = 'staging_real_estate'
         # Fitness/Health apps (check first as they're often misclassified)
-        elif any(word in content for word in ['fitness', 'workout', 'nutrition', 'health', 'wellness', 'exercise', 'trainer', 'meal', 'calorie', 'step', 'wearable', 'fitbit', 'apple watch', 'strava']):
+        if any(word in content for word in ['fitness', 'workout', 'nutrition', 'health', 'wellness', 'exercise', 'trainer', 'meal', 'calorie', 'step', 'wearable', 'fitbit', 'apple watch', 'strava']):
             domain = 'fitness_app'
         elif any(word in content for word in ['support', 'ticket', 'helpdesk', 'customer service', 'agent']):
             domain = 'customer_support'
@@ -169,12 +166,8 @@ class ProductManagerXAgent(BaseXAgent):
         requirements = []
         content_lower = content.lower()
         
-        # Domain-specific semantic analysis for staging and real estate
-        if any(term in content_lower for term in ['staging', 'home staging', 'real estate', 'property staging', 'furniture rental', 'realtor', 'property', 'listing']):
-            requirements.extend(self._extract_staging_real_estate_requirements(content))
-        
         # Domain-specific semantic analysis for customer support systems
-        elif any(term in content_lower for term in ['support', 'ticket', 'helpdesk', 'customer service', 'agent']):
+        if any(term in content_lower for term in ['support', 'ticket', 'helpdesk', 'customer service', 'agent']):
             requirements.extend(self._extract_customer_support_requirements(content))
         
         # Domain-specific analysis for traffic management systems
@@ -205,133 +198,6 @@ class ProductManagerXAgent(BaseXAgent):
         
         return unique_requirements[:8]  # Limit to 8 high-quality requirements
     
-    def _extract_staging_real_estate_requirements(self, content: str) -> list:
-        """Extract staging and real estate specific requirements"""
-        requirements = []
-        content_lower = content.lower()
-        
-        # Core staging management system
-        if any(term in content_lower for term in ['staging', 'home staging', 'property staging']):
-            requirements.append({
-                'title': 'Comprehensive Home Staging Management Platform',
-                'priority': 'high',
-                'category': 'functional'
-            })
-        
-        # Property assessment and planning
-        if any(term in content_lower for term in ['property', 'assessment', 'planning', 'room', 'space']):
-            requirements.append({
-                'title': 'Property Assessment and Staging Plan Generation System',
-                'priority': 'high',
-                'category': 'functional'
-            })
-        
-        # Furniture inventory and partnership management
-        if any(term in content_lower for term in ['furniture', 'inventory', 'partner', 'supplier', 'rental']):
-            requirements.append({
-                'title': 'Furniture Partner Integration and Inventory Management System',
-                'priority': 'high',
-                'category': 'functional'
-            })
-        
-        # Client relationship management for real estate agents
-        if any(term in content_lower for term in ['realtor', 'real estate', 'agent', 'client', 'property owner']):
-            requirements.append({
-                'title': 'Real Estate Agent and Client Relationship Management Portal',
-                'priority': 'high',
-                'category': 'functional'
-            })
-        
-        # Logistics and delivery coordination
-        if any(term in content_lower for term in ['delivery', 'pickup', 'logistics', 'installation', 'coordination']):
-            requirements.append({
-                'title': 'Staging Logistics and Furniture Delivery Coordination System',
-                'priority': 'high',
-                'category': 'functional'
-            })
-        
-        # 3D visualization and before/after tools
-        if any(term in content_lower for term in ['visualization', '3d', 'virtual', 'before', 'after', 'photo']):
-            requirements.append({
-                'title': '3D Visualization and Before/After Property Showcase Platform',
-                'priority': 'medium',
-                'category': 'functional'
-            })
-        
-        # Scheduling and project management
-        if any(term in content_lower for term in ['schedule', 'appointment', 'timeline', 'project', 'calendar']):
-            requirements.append({
-                'title': 'Staging Project Scheduling and Timeline Management System',
-                'priority': 'high',
-                'category': 'functional'
-            })
-        
-        # Financial management and billing
-        if any(term in content_lower for term in ['billing', 'cost', 'budget', 'pricing', 'payment', 'invoice']):
-            requirements.append({
-                'title': 'Partnership Billing and Financial Management System',
-                'priority': 'high',
-                'category': 'functional'
-            })
-        
-        # Regional focus - Daytona and East Coast Florida
-        if any(term in content_lower for term in ['daytona', 'florida', 'east coast', 'regional']):
-            requirements.append({
-                'title': 'East Coast Florida Regional Operations and Market Intelligence System',
-                'priority': 'medium',
-                'category': 'functional'
-            })
-        
-        # Mobile app for field teams
-        if any(term in content_lower for term in ['mobile', 'field', 'on-site', 'app', 'coordinator']):
-            requirements.append({
-                'title': 'Mobile Application for Staging Coordinators and Field Operations',
-                'priority': 'high',
-                'category': 'functional'
-            })
-        
-        # Quality control and maintenance
-        if any(term in content_lower for term in ['quality', 'maintenance', 'damage', 'cleaning', 'condition']):
-            requirements.append({
-                'title': 'Furniture Quality Control and Maintenance Tracking System',
-                'priority': 'medium',
-                'category': 'functional'
-            })
-        
-        # Analytics and performance reporting
-        if any(term in content_lower for term in ['analytics', 'report', 'performance', 'success', 'roi', 'metrics']):
-            requirements.append({
-                'title': 'Staging Performance Analytics and ROI Reporting Dashboard',
-                'priority': 'medium',
-                'category': 'functional'
-            })
-        
-        # Lead generation and marketing
-        if any(term in content_lower for term in ['lead', 'marketing', 'referral', 'business development']):
-            requirements.append({
-                'title': 'Lead Generation and Real Estate Agent Referral System',
-                'priority': 'medium',
-                'category': 'functional'
-            })
-        
-        # Automated workflow management
-        if any(term in content_lower for term in ['workflow', 'automation', 'process', 'systematic']):
-            requirements.append({
-                'title': 'Automated Staging Workflow and Process Management Engine',
-                'priority': 'medium',
-                'category': 'functional'
-            })
-        
-        # Integration with real estate platforms
-        if any(term in content_lower for term in ['mls', 'zillow', 'realtor.com', 'integration', 'listing']):
-            requirements.append({
-                'title': 'MLS and Real Estate Platform Integration System',
-                'priority': 'medium',
-                'category': 'functional'
-            })
-        
-        return requirements
-
     def _extract_customer_support_requirements(self, content: str) -> list:
         """Extract customer support system specific requirements"""
         requirements = []
@@ -793,12 +659,7 @@ class ProductManagerXAgent(BaseXAgent):
             'System Administrators': ['admin', 'administrator', 'ops', 'devops'],
             'Government Agencies': ['government', 'agency', 'municipal', 'city', 'public'],
             'Emergency Services': ['emergency', 'police', 'fire', 'ambulance', 'first responder'],
-            'Traffic Authorities': ['traffic', 'transportation', 'transit', 'dot'],
-            'Real Estate Agents': ['realtor', 'real estate agent', 'broker', 'listing agent'],
-            'Property Owners': ['property owner', 'homeowner', 'seller', 'landlord'],
-            'Staging Coordinators': ['staging coordinator', 'home stager', 'interior designer', 'field team'],
-            'Furniture Partners': ['furniture supplier', 'rental company', 'partner', 'vendor'],
-            'Delivery Teams': ['delivery', 'logistics', 'installation team', 'movers']
+            'Traffic Authorities': ['traffic', 'transportation', 'transit', 'dot']
         }
         
         for stakeholder, keywords in stakeholder_patterns.items():
@@ -962,14 +823,7 @@ class TaskManagerXAgent(BaseXAgent):
                 task_id += 1
         
         # Add domain-specific tasks
-        if domain == 'staging_real_estate':
-            tasks.extend([
-                {'id': f"TASK-{task_id:03d}", 'title': 'Furniture Partner API Integration Setup', 'req_id': 'DOMAIN', 'story_points': 6, 'hours': 20, 'priority': 'high'},
-                {'id': f"TASK-{task_id+1:03d}", 'title': 'Property Assessment Form Builder', 'req_id': 'DOMAIN', 'story_points': 5, 'hours': 16, 'priority': 'high'},
-                {'id': f"TASK-{task_id+2:03d}", 'title': 'Staging Timeline and Calendar System', 'req_id': 'DOMAIN', 'story_points': 7, 'hours': 24, 'priority': 'high'},
-                {'id': f"TASK-{task_id+3:03d}", 'title': 'Regional Market Data Integration (East Coast FL)', 'req_id': 'DOMAIN', 'story_points': 4, 'hours': 14, 'priority': 'medium'}
-            ])
-        elif domain == 'visual_workflow':
+        if domain == 'visual_workflow':
             tasks.extend([
                 {'id': f"TASK-{task_id:03d}", 'title': 'Canvas Setup', 'req_id': 'DOMAIN', 'story_points': 5, 'hours': 16, 'priority': 'high'},
                 {'id': f"TASK-{task_id+1:03d}", 'title': 'Drag & Drop', 'req_id': 'DOMAIN', 'story_points': 8, 'hours': 24, 'priority': 'high'}
