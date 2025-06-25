@@ -1,0 +1,210 @@
+🚀 Starting X-Agent Backend Server with Feedback Loop...
+📡 API available at http://0.0.0.0:5000
+🔗 Endpoints:
+   POST /api/process - Process documents with feedback loop
+   POST /api/chat    - LLM-powered requirements chat
+   GET  /api/status  - Get pipeline status
+   GET  /health     - Health check
+
+🔄 Feedback Loop Features:
+   • Analyst → PM → Task Manager → Scrum Master
+   • PM ↔ Scrum Master feedback loop (max 3 iterations)
+   • Automatic scope reduction and quality improvement
+
+🔧 Checking dependencies...
+✅ Flask available
+✅ Flask-CORS available
+✅ lxml available
+✅ requests available
+
+✅ Flask server starting on 0.0.0.0:5000...
+🔧 Binding to 0.0.0.0:5000 for Replit compatibility...
+ * Tip: There are .env or .flaskenv files present. Do "pip install python-dotenv" to use them.
+ * Serving Flask app 'main'
+ * Debug mode: off
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.128.46:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.128.46 - - [25/Jun/2025 21:16:58] "GET / HTTP/1.1" 404 -
+INFO:__main__:📥 Received document content: <input><text>
+Executive Summary
+This proposal outlines a mutually beneficial exclusive partnership between Stell Magnolia Stagings and Hudsons Furniture Company. Hudsons will supply all furniture and ...
+INFO:__main__:🚀 Starting X-Agent pipeline execution...
+INFO:__main__:🔍 Step 1: Document Analysis (runs once)
+INFO:__main__:📋 Step 2: Starting PM → Task Manager → Scrum Master cycle
+INFO:__main__:
+--- Iteration 1 ---
+INFO:__main__:📋 Product Manager: Creating/updating requirements
+ERROR:__main__:API error: xmlParseEntityRef: no name, line 9, column 25 (<string>, line 9)
+Traceback (most recent call last):
+  File "/home/runner/workspace/main.py", line 1328, in process_document
+    result = pipeline.execute(document_content)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 1009, in execute
+    pm_output = self.product_manager.process(current_input)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 44, in process
+    parsed = etree.fromstring(input_xml.encode())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "src/lxml/etree.pyx", line 3257, in lxml.etree.fromstring
+  File "src/lxml/parser.pxi", line 1916, in lxml.etree._parseMemoryDocument
+  File "src/lxml/parser.pxi", line 1803, in lxml.etree._parseDoc
+  File "src/lxml/parser.pxi", line 1144, in lxml.etree._BaseParser._parseDoc
+  File "src/lxml/parser.pxi", line 618, in lxml.etree._ParserContext._handleParseResultDoc
+  File "src/lxml/parser.pxi", line 728, in lxml.etree._handleParseResult
+  File "src/lxml/parser.pxi", line 657, in lxml.etree._raiseParseError
+  File "<string>", line 9
+lxml.etree.XMLSyntaxError: xmlParseEntityRef: no name, line 9, column 25
+INFO:werkzeug:127.0.0.1 - - [25/Jun/2025 21:17:31] "POST /api/process HTTP/1.1" 500 -
+🚀 Starting X-Agent Backend Server with Feedback Loop...
+📡 API available at http://0.0.0.0:5000
+🔗 Endpoints:
+   POST /api/process - Process documents with feedback loop
+   POST /api/chat    - LLM-powered requirements chat
+   GET  /api/status  - Get pipeline status
+   GET  /health     - Health check
+
+🔄 Feedback Loop Features:
+   • Analyst → PM → Task Manager → Scrum Master
+   • PM ↔ Scrum Master feedback loop (max 3 iterations)
+   • Automatic scope reduction and quality improvement
+
+🔧 Checking dependencies...
+✅ Flask available
+✅ Flask-CORS available
+✅ lxml available
+✅ requests available
+
+✅ Flask server starting on 0.0.0.0:5000...
+🔧 Binding to 0.0.0.0:5000 for Replit compatibility...
+ * Tip: There are .env or .flaskenv files present. Do "pip install python-dotenv" to use them.
+ * Serving Flask app 'main'
+ * Debug mode: off
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.128.46:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.128.46 - - [25/Jun/2025 21:16:58] "GET / HTTP/1.1" 404 -
+INFO:__main__:📥 Received document content: <input><text>
+Executive Summary
+This proposal outlines a mutually beneficial exclusive partnership between Stell Magnolia Stagings and Hudsons Furniture Company. Hudsons will supply all furniture and ...
+INFO:__main__:🚀 Starting X-Agent pipeline execution...
+INFO:__main__:🔍 Step 1: Document Analysis (runs once)
+INFO:__main__:📋 Step 2: Starting PM → Task Manager → Scrum Master cycle
+INFO:__main__:
+--- Iteration 1 ---
+INFO:__main__:📋 Product Manager: Creating/updating requirements
+ERROR:__main__:API error: xmlParseEntityRef: no name, line 9, column 25 (<string>, line 9)
+Traceback (most recent call last):
+  File "/home/runner/workspace/main.py", line 1328, in process_document
+    result = pipeline.execute(document_content)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 1009, in execute
+    pm_output = self.product_manager.process(current_input)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 44, in process
+    parsed = etree.fromstring(input_xml.encode())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "src/lxml/etree.pyx", line 3257, in lxml.etree.fromstring
+  File "src/lxml/parser.pxi", line 1916, in lxml.etree._parseMemoryDocument
+  File "src/lxml/parser.pxi", line 1803, in lxml.etree._parseDoc
+  File "src/lxml/parser.pxi", line 1144, in lxml.etree._BaseParser._parseDoc
+  File "src/lxml/parser.pxi", line 618, in lxml.etree._ParserContext._handleParseResultDoc
+  File "src/lxml/parser.pxi", line 728, in lxml.etree._handleParseResult
+  File "src/lxml/parser.pxi", line 657, in lxml.etree._raiseParseError
+  File "<string>", line 9
+lxml.etree.XMLSyntaxError: xmlParseEntityRef: no name, line 9, column 25
+INFO:werkzeug:127.0.0.1 - - [25/Jun/2025 21:17:31] "POST /api/process HTTP/1.1" 500 -
+🚀 Starting X-Agent Backend Server with Feedback Loop...
+📡 API available at http://0.0.0.0:5000
+🔗 Endpoints:
+   POST /api/process - Process documents with feedback loop
+   POST /api/chat    - LLM-powered requirements chat
+   GET  /api/status  - Get pipeline status
+   GET  /health     - Health check
+
+🔄 Feedback Loop Features:
+   • Analyst → PM → Task Manager → Scrum Master
+   • PM ↔ Scrum Master feedback loop (max 3 iterations)
+   • Automatic scope reduction and quality improvement
+
+🔧 Checking dependencies...
+✅ Flask available
+✅ Flask-CORS available
+✅ lxml available
+✅ requests available
+
+✅ Flask server starting on 0.0.0.0:5000...
+🔧 Binding to 0.0.0.0:5000 for Replit compatibility...
+ * Tip: There are .env or .flaskenv files present. Do "pip install python-dotenv" to use them.
+ * Serving Flask app 'main'
+ * Debug mode: off
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.128.46:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.128.46 - - [25/Jun/2025 21:16:58] "GET / HTTP/1.1" 404 -
+INFO:__main__:📥 Received document content: <input><text>
+Executive Summary
+This proposal outlines a mutually beneficial exclusive partnership between Stell Magnolia Stagings and Hudsons Furniture Company. Hudsons will supply all furniture and ...
+INFO:__main__:🚀 Starting X-Agent pipeline execution...
+INFO:__main__:🔍 Step 1: Document Analysis (runs once)
+INFO:__main__:📋 Step 2: Starting PM → Task Manager → Scrum Master cycle
+INFO:__main__:
+--- Iteration 1 ---
+INFO:__main__:📋 Product Manager: Creating/updating requirements
+ERROR:__main__:API error: xmlParseEntityRef: no name, line 9, column 25 (<string>, line 9)
+Traceback (most recent call last):
+  File "/home/runner/workspace/main.py", line 1328, in process_document
+    result = pipeline.execute(document_content)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 1009, in execute
+    pm_output = self.product_manager.process(current_input)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 44, in process
+    parsed = etree.fromstring(input_xml.encode())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "src/lxml/etree.pyx", line 3257, in lxml.etree.fromstring
+  File "src/lxml/parser.pxi", line 1916, in lxml.etree._parseMemoryDocument
+  File "src/lxml/parser.pxi", line 1803, in lxml.etree._parseDoc
+  File "src/lxml/parser.pxi", line 1144, in lxml.etree._BaseParser._parseDoc
+  File "src/lxml/parser.pxi", line 618, in lxml.etree._ParserContext._handleParseResultDoc
+  File "src/lxml/parser.pxi", line 728, in lxml.etree._handleParseResult
+  File "src/lxml/parser.pxi", line 657, in lxml.etree._raiseParseError
+  File "<string>", line 9
+lxml.etree.XMLSyntaxError: xmlParseEntityRef: no name, line 9, column 25
+INFO:werkzeug:127.0.0.1 - - [25/Jun/2025 21:17:31] "POST /api/process HTTP/1.1" 500 -
+INFO:__main__:📥 Received document content: <input><text>
+Executive Summary
+This proposal outlines a mutually beneficial exclusive partnership between Stell Magnolia Stagings and Hudsons Furniture Company. Hudsons will supply all furniture and ...
+INFO:__main__:🚀 Starting X-Agent pipeline execution...
+INFO:__main__:🔍 Step 1: Document Analysis (runs once)
+INFO:__main__:📋 Step 2: Starting PM → Task Manager → Scrum Master cycle
+INFO:__main__:
+--- Iteration 1 ---
+INFO:__main__:📋 Product Manager: Creating/updating requirements
+ERROR:__main__:API error: xmlParseEntityRef: no name, line 9, column 25 (<string>, line 9)
+Traceback (most recent call last):
+  File "/home/runner/workspace/main.py", line 1328, in process_document
+    result = pipeline.execute(document_content)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 1009, in execute
+    pm_output = self.product_manager.process(current_input)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/main.py", line 44, in process
+    parsed = etree.fromstring(input_xml.encode())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "src/lxml/etree.pyx", line 3257, in lxml.etree.fromstring
+  File "src/lxml/parser.pxi", line 1916, in lxml.etree._parseMemoryDocument
+  File "src/lxml/parser.pxi", line 1803, in lxml.etree._parseDoc
+  File "src/lxml/parser.pxi", line 1144, in lxml.etree._BaseParser._parseDoc
+  File "src/lxml/parser.pxi", line 618, in lxml.etree._ParserContext._handleParseResultDoc
+  File "src/lxml/parser.pxi", line 728, in lxml.etree._handleParseResult
+  File "src/lxml/parser.pxi", line 657, in lxml.etree._raiseParseError
+  File "<string>", line 9
+lxml.etree.XMLSyntaxError: xmlParseEntityRef: no name, line 9, column 25
+INFO:werkzeug:127.0.0.1 - - [25/Jun/2025 21:20:53] "POST /api/process HTTP/1.1" 500 -
