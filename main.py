@@ -145,12 +145,17 @@ class ProductManagerXAgent(BaseXAgent):
         # Enhanced stakeholder detection
         stakeholders = self._detect_stakeholders(content)
         
+        # Extract personalization info
+        person_info = self._extract_person_and_company(content)
+        
         return {
             'domain': domain,
             'requirements': requirements,
             'stakeholders': stakeholders,
             'req_count': len(requirements),
-            'feedback_applied': feedback_context is not None
+            'feedback_applied': feedback_context is not None,
+            'person_name': person_info.get('person'),
+            'company_name': person_info.get('company')
         }
     
     def _extract_natural_language_requirements(self, content: str) -> list:
@@ -466,6 +471,48 @@ class ProductManagerXAgent(BaseXAgent):
         
         return requirements
     
+    def _extract_person_and_company(self, content: str) -> dict:
+        """Extract person and company names from content"""
+        person_info = {'person': None, 'company': None}
+        
+        # Common patterns for person names
+        person_patterns = [
+            r'(?:I am|My name is|I\'m)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'(?:from|by)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)',
+            r'([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s+from|\s+at)',
+            r'Project\s+(?:lead|manager|owner):\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'Contact:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'
+        ]
+        
+        # Common patterns for company names
+        company_patterns = [
+            r'(?:at|for|from)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Inc|LLC|Corp|Company|Technologies|Systems|Solutions|Ltd)\.?))',
+            r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s+(?:Inc|LLC|Corp|Company|Technologies|Systems|Solutions|Ltd)\.?))',
+            r'Company:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'Organization:\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)',
+            r'working\s+at\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)'
+        ]
+        
+        # Extract person name
+        for pattern in person_patterns:
+            match = re.search(pattern, content)
+            if match:
+                person_info['person'] = match.group(1).strip()
+                break
+        
+        # Extract company name
+        for pattern in company_patterns:
+            match = re.search(pattern, content)
+            if match:
+                company_info['company'] = match.group(1).strip()
+                # Filter out common false positives
+                company_name = match.group(1).strip()
+                if not any(word in company_name.lower() for word in ['user', 'customer', 'agent', 'manager', 'system', 'application']):
+                    person_info['company'] = company_name
+                break
+        
+        return person_info
+    
     def _deduplicate_and_prioritize(self, requirements: list) -> list:
         """Remove duplicates and ensure proper prioritization"""
         seen_titles = set()
@@ -583,12 +630,19 @@ class ProductManagerXAgent(BaseXAgent):
         
         feedback_note = "\n    <FeedbackApplied>true</FeedbackApplied>" if result['feedback_applied'] else ""
         
+        # Add personalization info
+        person_xml = ""
+        if result.get('person_name'):
+            person_xml += f"\n    <PersonName>{result['person_name']}</PersonName>"
+        if result.get('company_name'):
+            person_xml += f"\n    <CompanyName>{result['company_name']}</CompanyName>"
+        
         return f"""<?xml version="1.0" encoding="UTF-8"?>
 <TaskPacket>
     <ProjectInfo>
         <Domain>{result['domain']}</Domain>
         <RequirementCount>{result['req_count']}</RequirementCount>
-    </ProjectInfo>{feedback_note}
+    </ProjectInfo>{feedback_note}{person_xml}
     <Requirements>
 {reqs_xml}
     </Requirements>
@@ -1007,9 +1061,38 @@ def _convert_xml_to_natural_language(xml_output: str, status: str) -> str:
         # Build natural language output
         output = []
         
-        # Header
+        # Check for personalization info
+        person_name = None
+        company_name = None
+        if hasattr(tree, 'find'):
+            person_elem = tree.find('.//PersonName')
+            company_elem = tree.find('.//CompanyName')
+            if person_elem is not None:
+                person_name = person_elem.text
+            if company_elem is not None:
+                company_name = company_elem.text
+        
+        # Header with personalization
         output.append("🚀 **X-Agent Pipeline Analysis Results**\n")
         output.append("=" * 50)
+        
+        # Personalized greeting
+        if person_name or company_name:
+            greeting_parts = []
+            if person_name:
+                greeting_parts.append(f"**{person_name}**")
+            if company_name:
+                greeting_parts.append(f"**{company_name}**")
+            
+            if len(greeting_parts) == 2:
+                greeting = f"\n👋 Hello {greeting_parts[0]} from {greeting_parts[1]}!"
+            elif person_name:
+                greeting = f"\n👋 Hello {greeting_parts[0]}!"
+            else:
+                greeting = f"\n🏢 Analysis for {greeting_parts[0]}"
+            
+            output.append(greeting)
+            output.append("\nHere's your personalized project analysis:\n")
         
         # Pipeline Summary
         status_icon = "✅" if "APPROVED" in status else "❌"
