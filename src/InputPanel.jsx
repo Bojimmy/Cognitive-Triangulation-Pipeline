@@ -169,7 +169,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
 
         {mode === 'chat' && (
           <div className="flex flex-col h-full">
-            {/* Chat Header */}
+            {/* Chat Header with Controls */}
             <div className="flex justify-between items-center mb-3 pb-2 border-b border-gray-700">
               <h3 className="text-sm font-medium text-gray-300">
                 🤖 Requirements Assistant
@@ -192,10 +192,40 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
               </div>
             </div>
 
-            {/* Chat Messages Area */}
-            <div className="bg-gray-900 rounded-lg p-4 overflow-y-auto mb-3" style={{ minHeight: '300px', maxHeight: '400px' }}>
+            {/* Chat Input Area - NOW AT TOP */}
+            <div className="bg-gray-800 rounded-lg p-3 border border-gray-700 mb-3">
+              <div className="flex gap-2">
+                <textarea
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleChatSubmit();
+                    }
+                  }}
+                  placeholder="Ask about requirements..."
+                  className="flex-1 bg-gray-700 text-white text-sm px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
+                  rows="2"
+                  disabled={isLoading}
+                />
+                <button
+                  onClick={handleChatSubmit}
+                  disabled={!chatInput.trim() || isLoading}
+                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm rounded font-medium"
+                >
+                  {isLoading ? '...' : 'Send'}
+                </button>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Press Enter to send • Shift+Enter for new line
+              </div>
+            </div>
+
+            {/* Chat Messages Area - NOW TAKES ALL REMAINING SPACE */}
+            <div className="flex-1 bg-gray-900 rounded-lg p-4 overflow-y-auto">
               {chatHistory.length === 0 ? (
-                <div className="text-center text-gray-500 text-sm mt-12">
+                <div className="text-center text-gray-500 text-sm mt-8">
                   <div className="text-3xl mb-3">💬</div>
                   <div className="mb-2">Welcome to Requirements Chat!</div>
                   <div className="text-xs">Ask questions like:</div>
@@ -209,7 +239,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
                 <div className="space-y-4">
                   {chatHistory.map((msg, idx) => (
                     <div key={idx} className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-xs px-3 py-2 rounded-lg ${
+                      <div className={`max-w-[90%] px-3 py-2 rounded-lg ${
                         msg.type === 'user' 
                           ? 'bg-blue-600 text-white' 
                           : 'bg-gray-700 text-gray-200'
@@ -223,38 +253,6 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Chat Input Area */}
-            <div className="bg-gray-800 rounded-lg p-3 border border-gray-700">
-              <div className="flex flex-col gap-2">
-                <textarea
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleChatSubmit();
-                    }
-                  }}
-                  placeholder="Type your question about requirements..."
-                  className="w-full bg-gray-700 text-white text-sm px-3 py-3 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
-                  rows="3"
-                  disabled={isLoading}
-                />
-                <div className="flex justify-between items-center">
-                  <div className="text-xs text-gray-500">
-                    Press Enter to send • Shift+Enter for new line
-                  </div>
-                  <button
-                    onClick={handleChatSubmit}
-                    disabled={!chatInput.trim() || isLoading}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm rounded font-medium"
-                  >
-                    {isLoading ? '...' : 'Send'}
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         )}
