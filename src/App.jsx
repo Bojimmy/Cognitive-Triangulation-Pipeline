@@ -280,41 +280,31 @@ const initialEdges = [
   {
     id: 'e1-2',
     source: '1',
-    sourceHandle: 'output',
     target: '2',
-    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
   {
     id: 'e2-3',
     source: '2',
-    sourceHandle: 'output',
     target: '3',
-    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
   {
     id: 'e3-4',
     source: '3',
-    sourceHandle: 'output',
     target: '4',
-    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
   {
     id: 'e4-5',
     source: '4',
-    sourceHandle: 'output',
     target: '5',
-    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
   {
     id: 'e5-3',
     source: '5',
-    sourceHandle: 'feedback',
     target: '3',
-    targetHandle: 'feedback',
     markerEnd: { type: MarkerType.ArrowClosed },
     style: { stroke: '#f59e0b' },
     label: 'feedback',
@@ -322,9 +312,7 @@ const initialEdges = [
   {
     id: 'e5-6',
     source: '5',
-    sourceHandle: 'output',
     target: '6',
-    targetHandle: 'input',
     markerEnd: { type: MarkerType.ArrowClosed },
   },
 ];
@@ -451,7 +439,7 @@ export default function App() {
           )}
         </div>
         
-        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }}>
+        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100vh' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
