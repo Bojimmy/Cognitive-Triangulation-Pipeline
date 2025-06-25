@@ -44,79 +44,48 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
     };
     setChatHistory(prev => [...prev, typingMessage]);
 
-    // Simulate realistic response time
-    setTimeout(() => {
-      const response = generateResponse(userMessage);
+    try {
+      // Call the actual LLM API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userMessage,
+          history: chatHistory.filter(msg => msg.content !== '🤖 Thinking...')
+        })
+      });
 
-      // Remove typing indicator and add response
+      const data = await response.json();
+      const aiResponse = data.response || 'Sorry, I encountered an error. Please try again.';
+
+      // Remove typing indicator and add real AI response
       setChatHistory(prev => {
         const withoutTyping = prev.slice(0, -1);
         return [...withoutTyping, {
           type: 'ai',
-          content: response,
+          content: aiResponse,
           timestamp: new Date().toLocaleTimeString()
         }];
       });
-    }, 1000 + Math.random() * 1500); // 1-2.5 seconds delay
+
+    } catch (error) {
+      console.error('Chat API error:', error);
+      
+      // Remove typing indicator and add error message
+      setChatHistory(prev => {
+        const withoutTyping = prev.slice(0, -1);
+        return [...withoutTyping, {
+          type: 'ai',
+          content: 'Sorry, I had trouble connecting. Please try again or check if the backend is running.',
+          timestamp: new Date().toLocaleTimeString()
+        }];
+      });
+    }
   };
 
-  const generateResponse = (userInput) => {
-    const lowerInput = userInput.toLowerCase();
-
-    // Project management and workflow advice
-    if (lowerInput.includes('start') || lowerInput.includes('begin') || lowerInput.includes('getting started')) {
-      return "Great! Starting a new project? Here's my advice:\n\n1. **Define your goals clearly** - What problem are you solving?\n2. **Start small** - Build an MVP first\n3. **Plan your tech stack** - Choose familiar technologies\n4. **Set up version control** - Use Git from day one\n5. **Think about your users** - Who will use this?\n\nWhat kind of project are you thinking about?";
-    }
-
-    if (lowerInput.includes('stuck') || lowerInput.includes('problem') || lowerInput.includes('issue')) {
-      return "I understand you're facing a challenge! Here's how I'd approach it:\n\n💡 **Break it down**: What's the smallest part you can tackle first?\n🔍 **Research**: Have others solved similar problems?\n🤝 **Ask for help**: Don't hesitate to reach out to communities\n📝 **Document**: Write down what you've tried\n\nTell me more about what's blocking you - I'm here to help brainstorm solutions!";
-    }
-
-    if (lowerInput.includes('tech stack') || lowerInput.includes('technology') || lowerInput.includes('framework')) {
-      return "Choosing the right tech stack is crucial! Here's my framework for deciding:\n\n🎯 **Consider your goals**: Performance? Speed of development? Team expertise?\n📊 **Popular combos**:\n   • Frontend: React/Vue + Tailwind\n   • Backend: Node.js/Python + Database\n   • Full-stack: Next.js, Django, or Rails\n\n💭 **My advice**: Start with what you know, then expand. What type of application are you building?";
-    }
-
-    if (lowerInput.includes('design') || lowerInput.includes('ui') || lowerInput.includes('user interface')) {
-      return "Great question about design! Here's my design philosophy:\n\n✨ **Keep it simple**: Users should understand it immediately\n📱 **Mobile-first**: Most users are on phones\n🎨 **Consistent patterns**: Use established UI conventions\n⚡ **Fast loading**: Performance is user experience\n♿ **Accessible**: Design for everyone\n\nAre you looking for design tools, principles, or specific UI advice?";
-    }
-
-    if (lowerInput.includes('database') || lowerInput.includes('data') || lowerInput.includes('storage')) {
-      return "Data strategy is so important! Here's how I think about it:\n\n📊 **Start simple**: PostgreSQL or MySQL for most projects\n🏗️ **Design your schema carefully**: Think about relationships early\n📈 **Plan for scale**: But don't over-engineer initially\n🔒 **Security first**: Always encrypt sensitive data\n💾 **Backup strategy**: Automate backups from day one\n\nWhat kind of data are you working with?";
-    }
-
-    if (lowerInput.includes('learn') || lowerInput.includes('improve') || lowerInput.includes('better')) {
-      return "Love the growth mindset! Here's my learning strategy:\n\n📚 **Build projects**: Learning by doing is most effective\n🎯 **Focus deeply**: Master one thing at a time\n👥 **Join communities**: Discord, Reddit, local meetups\n📖 **Read code**: Study well-written open source projects\n🔄 **Practice daily**: Even 30 minutes helps\n\nWhat specific skill are you trying to develop?";
-    }
-
-    if (lowerInput.includes('deployment') || lowerInput.includes('deploy') || lowerInput.includes('hosting')) {
-      return "Deployment advice coming up! Here's my hosting strategy:\n\n🚀 **For beginners**: Vercel (frontend) + Railway/Heroku (backend)\n💰 **Budget-friendly**: Netlify, GitHub Pages, or Replit\n⚡ **Performance**: AWS, Google Cloud, or Digital Ocean\n🔄 **CI/CD**: Set up automated deployments early\n📊 **Monitoring**: Use analytics and error tracking\n\nWhat type of app are you looking to deploy?";
-    }
-
-    if (lowerInput.includes('team') || lowerInput.includes('collaboration') || lowerInput.includes('working together')) {
-      return "Team collaboration is an art! Here's what works:\n\n🎯 **Clear communication**: Regular standups and documentation\n📋 **Define roles**: Who does what, when\n🔄 **Version control**: Git workflow with code reviews\n📊 **Project management**: Trello, Notion, or Linear\n🤝 **Code standards**: Consistent formatting and conventions\n\nAre you leading a team or joining one?";
-    }
-
-    // React Flow and tool-specific advice
-    if (lowerInput.includes('react flow') || lowerInput.includes('workflow') || lowerInput.includes('visual')) {
-      return "React Flow is fantastic for visual workflows! Here's how to make the most of it:\n\n🎨 **Custom nodes**: Create nodes that match your domain\n🔗 **Smart connections**: Validate connections between node types\n💾 **Save/load**: Let users save their workflows\n📱 **Responsive**: Make sure it works on different screen sizes\n⚡ **Performance**: Use React.memo for complex workflows\n\nWhat kind of workflow are you visualizing?";
-    }
-
-    // Encouragement and motivation
-    if (lowerInput.includes('difficult') || lowerInput.includes('hard') || lowerInput.includes('frustrated')) {
-      return "I hear you - coding can be challenging! Remember:\n\n💪 **Every expert was once a beginner**\n🎯 **Break big problems into tiny pieces**\n🎉 **Celebrate small wins**\n🤝 **It's okay to ask for help**\n🔄 **Debugging is a skill - you're getting better**\n\nYou've got this! What's the specific challenge you're facing?";
-    }
-
-    // Default conversational response
-    const responses = [
-      "That's interesting! Tell me more about what you're working on. I'm here to help with advice, suggestions, and problem-solving.",
-      "I'd love to help! What specific aspect of your project or coding journey can I assist with?",
-      "Great question! I'm here to provide guidance on development, design, project management, and technical decisions. What's on your mind?",
-      "I'm here to be your coding advisor! Whether it's technical choices, project planning, or just brainstorming - what can I help with?",
-      "Sounds like you're working on something exciting! I can offer advice on architecture, tools, best practices, or just be a sounding board. What's up?"
-    ];
-
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
+  
 
   // Auto-scroll chat to bottom when new messages are added
   useEffect(() => {
