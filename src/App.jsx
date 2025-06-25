@@ -1,41 +1,121 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import './index.css';
 
-const agents = [
+const agentCategories = [
   {
-    id: 'analyst',
-    name: 'Document Analyst',
-    description: 'Document analysis',
-    color: 'bg-cyan-500',
-    icon: '🔍',
-    position: { x: 100, y: 200 }
+    category: 'Core X-Agents',
+    agents: [
+      { 
+        id: 'analyst', 
+        name: 'Analyst', 
+        description: 'Document Analysis', 
+        icon: '🔍', 
+        color: 'bg-blue-500',
+        position: { x: 100, y: 100 }
+      },
+      { 
+        id: 'pm', 
+        name: 'Product Manager', 
+        description: 'Requirements', 
+        icon: '📋', 
+        color: 'bg-green-500',
+        position: { x: 300, y: 100 }
+      },
+      { 
+        id: 'taskmanager', 
+        name: 'Task Manager', 
+        description: 'Task Breakdown', 
+        icon: '🔧', 
+        color: 'bg-purple-500',
+        position: { x: 500, y: 100 }
+      },
+      { 
+        id: 'scrum', 
+        name: 'Scrum Master', 
+        description: 'Release Approval', 
+        icon: '✅', 
+        color: 'bg-orange-500',
+        position: { x: 700, y: 100 }
+      }
+    ]
   },
   {
-    id: 'pm',
-    name: 'Product Manager', 
-    description: 'Requirements extraction',
-    color: 'bg-emerald-500',
-    icon: '👥',
-    position: { x: 350, y: 200 }
+    category: 'Development Agents',
+    agents: [
+      { 
+        id: 'architect', 
+        name: 'Architect', 
+        description: 'System Design', 
+        icon: '🏗️', 
+        color: 'bg-cyan-500',
+        position: { x: 100, y: 250 }
+      },
+      { 
+        id: 'developer', 
+        name: 'Developer', 
+        description: 'Code Generation', 
+        icon: '💻', 
+        color: 'bg-indigo-500',
+        position: { x: 300, y: 250 }
+      },
+      { 
+        id: 'tester', 
+        name: 'QA Tester', 
+        description: 'Test Generation', 
+        icon: '🧪', 
+        color: 'bg-pink-500',
+        position: { x: 500, y: 250 }
+      },
+      { 
+        id: 'reviewer', 
+        name: 'Code Reviewer', 
+        description: 'Code Review', 
+        icon: '👁️', 
+        color: 'bg-yellow-500',
+        position: { x: 700, y: 250 }
+      }
+    ]
   },
   {
-    id: 'taskmanager',
-    name: 'Task Manager',
-    description: 'Task breakdown',
-    color: 'bg-amber-500', 
-    icon: '📋',
-    position: { x: 600, y: 200 }
-  },
-  {
-    id: 'scrum',
-    name: 'PO/Scrum Master',
-    description: 'Final approval',
-    color: 'bg-violet-500',
-    icon: '🛡️',
-    position: { x: 850, y: 200 }
+    category: 'Infrastructure',
+    agents: [
+      { 
+        id: 'database', 
+        name: 'Database', 
+        description: 'Data Storage', 
+        icon: '🗄️', 
+        color: 'bg-red-500',
+        position: { x: 100, y: 400 }
+      },
+      { 
+        id: 'api', 
+        name: 'API Gateway', 
+        description: 'API Management', 
+        icon: '🌐', 
+        color: 'bg-teal-500',
+        position: { x: 300, y: 400 }
+      },
+      { 
+        id: 'monitor', 
+        name: 'Monitor', 
+        description: 'System Monitoring', 
+        icon: '📊', 
+        color: 'bg-slate-500',
+        position: { x: 500, y: 400 }
+      },
+      { 
+        id: 'deploy', 
+        name: 'Deployer', 
+        description: 'CI/CD Pipeline', 
+        icon: '🚀', 
+        color: 'bg-emerald-500',
+        position: { x: 700, y: 400 }
+      }
+    ]
   }
 ];
+
+const agents = agentCategories.flatMap(cat => cat.agents);
 
 const connections = [
   { from: 'analyst', to: 'pm' },
@@ -62,7 +142,7 @@ export default function App() {
     const nodePos = nodePositions[nodeId];
     const scaledX = (e.clientX - rect.left - canvasTransform.x) / canvasTransform.scale;
     const scaledY = (e.clientY - rect.top - canvasTransform.y) / canvasTransform.scale;
-    
+
     setDragOffset({
       x: scaledX - nodePos.x,
       y: scaledY - nodePos.y
@@ -85,7 +165,7 @@ export default function App() {
       const rect = canvasRef.current.getBoundingClientRect();
       const scaledX = (e.clientX - rect.left - canvasTransform.x) / canvasTransform.scale;
       const scaledY = (e.clientY - rect.top - canvasTransform.y) / canvasTransform.scale;
-      
+
       setNodePositions(prev => ({
         ...prev,
         [isDragging]: { 
@@ -112,10 +192,10 @@ export default function App() {
     const rect = canvasRef.current.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    
+
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     const newScale = Math.max(0.1, Math.min(3, canvasTransform.scale * delta));
-    
+
     setCanvasTransform(prev => ({
       scale: newScale,
       x: mouseX - (mouseX - prev.x) * (newScale / prev.scale),
@@ -126,14 +206,14 @@ export default function App() {
   const getConnectionPath = (fromId, toId) => {
     const fromPos = nodePositions[fromId];
     const toPos = nodePositions[toId];
-    
+
     const startX = fromPos.x + 120;
     const startY = fromPos.y + 40;
     const endX = toPos.x;
     const endY = toPos.y + 40;
-    
+
     const midX = (startX + endX) / 2;
-    
+
     return `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`;
   };
 
@@ -282,7 +362,7 @@ export default function App() {
                           <div className="text-xs font-medium truncate">{agent.name}</div>
                         </div>
                         <div className="text-xs text-gray-400">{agent.description}</div>
-                        
+
                         {/* Connection Handles */}
                         <div className="absolute -right-1 top-1/2 w-2 h-2 bg-gray-500 rounded-full transform -translate-y-1/2"></div>
                         <div className="absolute -left-1 top-1/2 w-2 h-2 bg-gray-500 rounded-full transform -translate-y-1/2"></div>
@@ -305,7 +385,7 @@ export default function App() {
                 </div>
                 <h3 className="font-medium">{selectedAgent.name}</h3>
               </div>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -318,7 +398,7 @@ export default function App() {
                     readOnly
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Description
@@ -329,7 +409,7 @@ export default function App() {
                     readOnly
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">
                     Status
