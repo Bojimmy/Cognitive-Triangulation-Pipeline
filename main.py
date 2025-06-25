@@ -15,6 +15,8 @@ from typing import Dict, Any, Optional
 from lxml import etree
 import logging
 import re
+import os
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -559,6 +561,77 @@ def get_status():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/chat', methods=['POST'])
+def chat_with_llm():
+    """Chat endpoint with LLM integration"""
+    try:
+        data = request.get_json()
+        user_message = data.get('message', '')
+        chat_history = data.get('history', [])
+        
+        if not user_message:
+            return jsonify({"error": "No message provided"}), 400
+        
+        # Get API key from environment
+        api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('LLM_API_KEY')
+        if not api_key:
+            return jsonify({
+                "response": "I'm here to help you structure requirements for the X-Agents pipeline. Please add your LLM API key to Secrets to enable AI responses. For now, consider formatting your requirements as REQ-001, REQ-002, etc."
+            }), 200
+        
+        # Prepare system prompt for requirements gathering
+        system_prompt = """You are an AI assistant helping users gather and structure software requirements for an intelligent agent pipeline. 
+
+Your role is to:
+1. Help users clarify their project requirements
+2. Guide them to structure requirements in REQ-001, REQ-002 format
+3. Ask clarifying questions about scope, stakeholders, and technical constraints
+4. Suggest breaking down complex requirements into smaller, manageable pieces
+
+Keep responses concise and focused on requirements gathering."""
+        
+        # Build conversation context
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add recent chat history (last 6 messages to stay within token limits)
+        recent_history = chat_history[-6:] if len(chat_history) > 6 else chat_history
+        for msg in recent_history:
+            role = "user" if msg['type'] == 'user' else "assistant"
+            messages.append({"role": role, "content": msg['content']})
+        
+        messages.append({"role": "user", "content": user_message})
+        
+        # Call OpenAI API (you can replace with other LLM providers)
+        response = requests.post(
+            'https://api.openai.com/v1/chat/completions',
+            headers={
+                'Authorization': f'Bearer {api_key}',
+                'Content-Type': 'application/json'
+            },
+            json={
+                'model': 'gpt-3.5-turbo',
+                'messages': messages,
+                'max_tokens': 500,
+                'temperature': 0.7
+            },
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            ai_response = response.json()['choices'][0]['message']['content']
+            return jsonify({"response": ai_response}), 200
+        else:
+            logger.error(f"LLM API error: {response.status_code} - {response.text}")
+            return jsonify({
+                "response": "I'm having trouble connecting to the AI service. Please try again or structure your requirements manually using REQ-001, REQ-002 format."
+            }), 200
+            
+    except Exception as e:
+        logger.error(f"Chat API error: {e}")
+        return jsonify({
+            "response": "I encountered an error. Please try again or format your requirements as REQ-001: Description, REQ-002: Description, etc."
+        }), 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -569,6 +642,7 @@ if __name__ == "__main__":
     print("📡 API available at http://0.0.0.0:5000")
     print("🔗 Endpoints:")
     print("   POST /api/process - Process documents with feedback loop")
+    print("   POST /api/chat    - LLM-powered requirements chat")
     print("   GET  /api/status  - Get pipeline status")
     print("   GET  /health     - Health check")
     print("\n🔄 Feedback Loop Features:")

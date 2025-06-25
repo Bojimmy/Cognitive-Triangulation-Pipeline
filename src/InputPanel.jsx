@@ -23,7 +23,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
     }
   };
 
-  const handleChatSubmit = () => {
+  const handleChatSubmit = async () => {
     if (!chatInput.trim()) return;
     
     const newMessage = {
@@ -33,18 +33,38 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
     };
     
     setChatHistory(prev => [...prev, newMessage]);
+    setChatInput('');
     
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Call your backend LLM endpoint
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: chatInput,
+          history: chatHistory
+        })
+      });
+      
+      const data = await response.json();
+      
       const aiResponse = {
         type: 'ai',
-        content: `I understand you want to know about: "${chatInput}". Let me help you structure this for the X-Agents pipeline. Consider breaking this into specific requirements with REQ-001, REQ-002 format.`,
+        content: data.response || 'Sorry, I encountered an error processing your request.',
         timestamp: new Date().toLocaleTimeString()
       };
       setChatHistory(prev => [...prev, aiResponse]);
-    }, 1000);
-    
-    setChatInput('');
+    } catch (error) {
+      console.error('Chat error:', error);
+      const errorResponse = {
+        type: 'ai',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date().toLocaleTimeString()
+      };
+      setChatHistory(prev => [...prev, errorResponse]);
+    }
   };
 
   const clearChat = () => {
