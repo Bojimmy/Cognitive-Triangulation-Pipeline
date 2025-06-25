@@ -5,7 +5,7 @@ entrypoint = "index.html"
 
 [nix]
 channel = "stable-24_05"
-packages = ["xcodebuild", "zlib"]
+packages = ["xcodebuild", "zlib", "lsof"]
 
 [unitTest]
 language = "nodejs"
@@ -34,6 +34,10 @@ externalPort = 80
 [[ports]]
 localPort = 5174
 externalPort = 3000
+
+[[ports]]
+localPort = 5175
+externalPort = 3003
 
 [workflows]
 runButton = "Full Stack Dev"
