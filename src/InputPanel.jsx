@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const InputPanel = ({ onRunPipeline, isLoading }) => {
   const [text, setText] = useState('');
@@ -45,18 +45,20 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
     };
     setChatHistory(prev => [...prev, typingMessage]);
     
-    // Generate response (either answer or requirements)
-    const response = generateResponse(userMessage);
-    
-    // Remove typing indicator and add response
-    setChatHistory(prev => {
-      const withoutTyping = prev.slice(0, -1);
-      return [...withoutTyping, {
-        type: 'ai',
-        content: response,
-        timestamp: new Date().toLocaleTimeString()
-      }];
-    });
+    // Simulate realistic response time
+    setTimeout(() => {
+      const response = generateResponse(userMessage);
+      
+      // Remove typing indicator and add response
+      setChatHistory(prev => {
+        const withoutTyping = prev.slice(0, -1);
+        return [...withoutTyping, {
+          type: 'ai',
+          content: response,
+          timestamp: new Date().toLocaleTimeString()
+        }];
+      });
+    }, 1000 + Math.random() * 1500); // 1-2.5 seconds delay
   };
 
   const generateResponse = (userInput) => {
@@ -116,6 +118,14 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
     
     return responses[Math.floor(Math.random() * responses.length)];
   };
+
+  // Auto-scroll chat to bottom when new messages are added
+  useEffect(() => {
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+  }, [chatHistory]);
 
   const clearChat = () => {
     setChatHistory([]);
@@ -254,7 +264,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
             </div>
 
             {/* Chat Messages Area */}
-            <div className="flex-1 p-4 overflow-y-auto bg-gray-900">
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-900" id="chat-messages">
               {chatHistory.length === 0 ? (
                 <div className="text-center text-gray-500 text-sm mt-8">
                   <div className="text-3xl mb-3">💬</div>
