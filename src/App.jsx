@@ -328,19 +328,17 @@ const initialEdges = [
   },
 ];
 
-// Utility function to escape XML special characters
+// Helper function to escape XML special characters
 const escapeXml = (unsafe) => {
-  return unsafe.replace(/[<>&'"]/g, function (c) {
-    switch (c) {
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '&': return '&amp;';
-      case '\'': return '&apos;';
-      case '"': return '&quot;';
-      default: return c;
-    }
-  });
-}
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, '&amp;')   // Must be first to avoid double-escaping
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ''); // Remove invalid XML characters
+};
 
 // Utility function to generate initial XML structure
 const generateInitialXml = (inputText) => {
