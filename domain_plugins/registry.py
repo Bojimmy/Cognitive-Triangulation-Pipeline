@@ -27,12 +27,24 @@ class DomainRegistry:
             from .fitness_app_handler import FitnessAppDomainHandler
             from .traffic_management_handler import TrafficManagementDomainHandler
             from .real_estate_handler import RealEstateDomainHandler
+            from .healthcare_handler import HealthcareDomainHandler
+            from .mobile_app_handler import MobileAppDomainHandler
+            from .ecommerce_handler import EcommerceDomainHandler
+            from .fintech_handler import FintechDomainHandler
+            from .visual_workflow_handler import VisualWorkflowDomainHandler
+            from .enterprise_handler import EnterpriseDomainHandler
             
             default_handlers = [
                 CustomerSupportDomainHandler(),
                 FitnessAppDomainHandler(),
                 TrafficManagementDomainHandler(),
                 RealEstateDomainHandler(),
+                HealthcareDomainHandler(),
+                MobileAppDomainHandler(),
+                EcommerceDomainHandler(),
+                FintechDomainHandler(),
+                VisualWorkflowDomainHandler(),
+                EnterpriseDomainHandler(),
             ]
             
             for handler in default_handlers:

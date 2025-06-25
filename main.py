@@ -79,25 +79,13 @@ class AnalystXAgent(BaseXAgent):
             content_bytes = etree.tostring(parsed_input, encoding='unicode', method='text')
             content = content_bytes.lower() if content_bytes else ""
 
-        # Enhanced domain detection with business-specific intelligence
-        # Fitness/Health apps (check first as they're often misclassified)
-        if any(word in content for word in ['fitness', 'workout', 'nutrition', 'health', 'wellness', 'exercise', 'trainer', 'meal', 'calorie', 'step', 'wearable', 'fitbit', 'apple watch', 'strava']):
-            domain = 'fitness_app'
-        elif any(word in content for word in ['support', 'ticket', 'helpdesk', 'customer service', 'agent']):
-            domain = 'customer_support'
-        elif any(word in content for word in ['healthcare', 'medical', 'patient', 'hospital', 'clinic', 'hipaa']):
-            domain = 'healthcare'
-        elif any(word in content for word in ['mobile', 'app', 'ios', 'android', 'smartphone']) and not any(word in content for word in ['ecommerce', 'e-commerce', 'shopping', 'cart']):
-            domain = 'mobile_app'
-        elif any(word in content for word in ['ecommerce', 'e-commerce', 'shopping', 'payment', 'cart', 'product']) and not any(word in content for word in ['fitness', 'health', 'workout']):
-            domain = 'ecommerce'
-        elif any(word in content for word in ['finance', 'banking', 'payment', 'financial', 'trading']):
-            domain = 'fintech'
-        elif any(word in content for word in ['canvas', 'visual', 'workflow', 'drag']):
-            domain = 'visual_workflow'
-        elif any(word in content for word in ['enterprise', 'compliance', 'security']):
-            domain = 'enterprise'
-        else:
+        # Use domain plugin system for intelligent detection
+        from domain_plugins.registry import DomainRegistry
+        registry = DomainRegistry()
+        domain, confidence = registry.detect_domain(content)
+        
+        # Fallback to general if confidence is too low
+        if confidence < 0.3:
             domain = 'general'
 
         return {
