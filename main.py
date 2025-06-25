@@ -530,11 +530,16 @@ def process_document():
         # Read raw text from request body
         document_content = request.data.decode('utf-8')
         
+        logger.info(f"📥 Received document content: {document_content[:200]}...")
+        
         if not document_content or not document_content.strip():
             return jsonify({"error": "No document content provided"}), 400
         
         # Execute pipeline with feedback loop
+        logger.info("🚀 Starting X-Agent pipeline execution...")
         result = pipeline.execute(document_content)
+        
+        logger.info(f"✅ Pipeline completed: {result.get('status', 'unknown')} after {result.get('iterations', 0)} iterations")
         
         if result['success']:
             # Return the XML result as plain text for frontend parsing
