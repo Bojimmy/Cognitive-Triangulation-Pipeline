@@ -456,6 +456,10 @@ export default function App() {
     }
   };
 
+  const handleSelectionChange = useCallback((elements) => {
+    setSelectedNodes(elements.nodes || []);
+  }, []);
+
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
 
@@ -477,7 +481,7 @@ export default function App() {
 
         <div 
           ref={reactFlowWrapper}
-          className="w-full h-full"
+          style={{ width: '100%', height: '100vh' }}
         >
           <ReactFlow
             nodes={nodes}
@@ -488,14 +492,14 @@ export default function App() {
             onInit={setReactFlowInstance}
             onDrop={onDrop}
             onDragOver={onDragOver}
-            onSelectionChange={onSelectionChange}
+            onSelectionChange={handleSelectionChange}
             nodeTypes={nodeTypes}
             fitView
-            attributionPosition="top-right"
+            className="bg-slate-50"
           >
             <MiniMap />
             <Controls />
-            <Background color="#aaa" gap={16} />
+            <Background variant="dots" gap={12} size={1} />
           </ReactFlow>
         </div>
       </div>
