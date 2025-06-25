@@ -45,22 +45,50 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
     };
     setChatHistory(prev => [...prev, typingMessage]);
     
-    // Generate structured requirements directly
-    const requirements = generateRequirements(userMessage);
+    // Generate response (either answer or requirements)
+    const response = generateResponse(userMessage);
     
-    // Remove typing indicator and add requirements
+    // Remove typing indicator and add response
     setChatHistory(prev => {
       const withoutTyping = prev.slice(0, -1);
       return [...withoutTyping, {
         type: 'ai',
-        content: requirements,
+        content: response,
         timestamp: new Date().toLocaleTimeString()
       }];
     });
   };
 
-  const generateRequirements = (description) => {
-    const lowerDesc = description.toLowerCase();
+  const generateResponse = (userInput) => {
+    const lowerInput = userInput.toLowerCase();
+    
+    // Check if it's a question
+    if (lowerInput.includes('?') || lowerInput.startsWith('how') || lowerInput.startsWith('what') || 
+        lowerInput.startsWith('why') || lowerInput.startsWith('when') || lowerInput.startsWith('where')) {
+      
+      // Answer common questions
+      if (lowerInput.includes('react flow') || lowerInput.includes('workflow')) {
+        return "React Flow is a library for building node-based workflow interfaces. In this app, you can drag nodes from the palette to create visual workflows. Each node represents a step in your process, and edges show the flow between steps.";
+      }
+      
+      if (lowerInput.includes('requirements') || lowerInput.includes('req-')) {
+        return "Requirements should be written in structured format like REQ-001: Description. This helps organize project specifications clearly. Would you like me to help convert your project description into structured requirements?";
+      }
+      
+      if (lowerInput.includes('node') && lowerInput.includes('add')) {
+        return "To add nodes to your workflow: 1) Look at the left panel (Node Palette), 2) Drag any node type onto the main canvas, 3) Connect nodes by dragging from one node's handle to another. You can delete selected nodes with Delete/Backspace.";
+      }
+      
+      if (lowerInput.includes('pipeline') || lowerInput.includes('run')) {
+        return "The pipeline processes your requirements through different workflow stages. Enter your project description in the text area, then click 'Run X-Flow Pipeline' to generate a visual workflow representation.";
+      }
+      
+      // General help
+      return "I can help you with workflow design, requirements structuring, and using this X-Flow interface. What specific aspect would you like to know more about?";
+    }
+    
+    // If not a question, generate requirements
+    const lowerDesc = userInput;
     let requirements = [];
     let reqNum = 1;
 
@@ -270,7 +298,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
                 <div className="text-center text-gray-500 text-sm mt-8">
                   <div className="text-3xl mb-3">💬</div>
                   <div className="mb-2">Requirements Assistant</div>
-                  <div className="text-xs">I'll help you create structured requirements in REQ-001 format</div>
+                  <div className="text-xs">Ask questions or describe your project for structured requirements</div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -304,7 +332,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
                       handleChatSubmit();
                     }
                   }}
-                  placeholder="Describe your project for structured requirements..."
+                  placeholder="Ask a question or describe your project..."
                   className="flex-1 bg-gray-700 text-white text-sm px-3 py-2 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none resize-none"
                   rows="2"
                   disabled={isLoading}
