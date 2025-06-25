@@ -71,8 +71,13 @@ class AnalystXAgent(BaseXAgent):
 
     def _process_intelligence(self, parsed_input: etree.Element) -> dict:
         """Detect document domain and type"""
-        content_bytes = etree.tostring(parsed_input, encoding='unicode', method='text')
-        content = content_bytes.lower() if content_bytes else ""
+        # Extract content from the text element
+        text_elem = parsed_input.find('.//text')
+        if text_elem is not None and text_elem.text:
+            content = text_elem.text.lower()
+        else:
+            content_bytes = etree.tostring(parsed_input, encoding='unicode', method='text')
+            content = content_bytes.lower() if content_bytes else ""
 
         # Enhanced domain detection with business-specific intelligence
         # Fitness/Health apps (check first as they're often misclassified)
@@ -108,7 +113,7 @@ class AnalystXAgent(BaseXAgent):
 <AnalysisPacket>
     <Domain>{result['domain']}</Domain>
     <Complexity>{result['complexity']}</Complexity>
-    <Content>{escaped_content}</Content>
+    <Content><![CDATA[{result['content']}]]></Content>
 </AnalysisPacket>"""
 
     def _escape_xml_content(self, content: str) -> str:
@@ -1036,9 +1041,11 @@ class XAgentPipeline:
         """Execute pipeline with PM-Scrum Master feedback loop"""
 
         logger.info("🔍 Step 1: Document Analysis (runs once)")
-        # Step 1: Analyst runs once - properly escape XML content
-        escaped_content = self._escape_xml_content(document_content)
-        document_xml = f"<?xml version='1.0' encoding='UTF-8'?><Document>{escaped_content}</Document>"
+        # Step 1: Analyst runs once - use CDATA for safe content handling
+        document_xml = f"""<?xml version='1.0' encoding='UTF-8'?>
+<Document>
+    <text><![CDATA[{document_content}]]></text>
+</Document>"""
 
         # Debug the XML content before parsing
         logger.info("🔍 Debugging XML content...")
@@ -1113,13 +1120,14 @@ class XAgentPipeline:
         """Create feedback XML for Product Manager"""
         analysis_tree = etree.fromstring(original_analysis.encode())
         domain = analysis_tree.find('Domain').text
-        content = analysis_tree.find('Content').text
+        content_elem = analysis_tree.find('Content')
+        content = content_elem.text if content_elem is not None else ""
 
         return f"""<?xml version="1.0" encoding="UTF-8"?>
 <FeedbackPacket>
     <Domain>{domain}</Domain>
-    <Feedback>{feedback}</Feedback>
-    <OriginalContent>{content}</OriginalContent>
+    <Feedback><![CDATA[{feedback}]]></Feedback>
+    <OriginalContent><![CDATA[{content}]]></OriginalContent>
 </FeedbackPacket>"""
 
     def _create_complete_result(self, analysis_xml: str, pm_xml: str, task_xml: str, approval_xml: str, iterations: int, status: str) -> str:
