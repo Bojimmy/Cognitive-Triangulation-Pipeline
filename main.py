@@ -689,7 +689,7 @@ class ProductManagerXAgent(BaseXAgent):
         # Apply feedback to create updated requirements
         return self._extract_requirements(domain, original_content, feedback)
 
-    def _apply_feedback_to_requirements(self, self, requirements: list, feedback: str) -> list:
+    def _apply_feedback_to_requirements(self, requirements: list, feedback: str) -> list:
         """Apply Scrum Master feedback to adjust requirements"""
 
         if 'reduce scope' in feedback.lower():
@@ -784,7 +784,8 @@ class TaskManagerXAgent(BaseXAgent):
         requirements = parsed_input.findall('.//Requirement')
         feedback_applied = parsed_input.find('FeedbackApplied') is not None
 
-        if feedback_applied:        logger.info(f"[Task Manager] Processing updated requirements ({len(requirements)} requirements)")
+        if feedback_applied:
+            logger.info(f"[Task Manager] Processing updated requirements ({len(requirements)} requirements)")
 
         tasks = []
         task_id = 1
