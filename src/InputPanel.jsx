@@ -31,7 +31,7 @@ const InputPanel = ({ onRunPipeline, isLoading, finalOutput, resultData }) => {
 
   const handleDownload = () => {
     let contentToDownload, downloadFileName;
-    
+
     if (mode === 'file') {
       // In file mode, prioritize pipeline results if available
       if (resultData && resultData.trim()) {
@@ -64,6 +64,31 @@ const InputPanel = ({ onRunPipeline, isLoading, finalOutput, resultData }) => {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+  };
+
+  const handleCopyToClipboard = async () => {
+    const content = fileContent.trim() || resultData || 'No content available';
+    try {
+      await navigator.clipboard.writeText(content);
+      // Show brief success feedback
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = '✅ Copied!';
+      button.className = button.className.replace('bg-purple-600 hover:bg-purple-700', 'bg-green-600');
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.className = button.className.replace('bg-green-600', 'bg-purple-600 hover:bg-purple-700');
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = content;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
   };
 
   const handleLoadOutput = () => {
@@ -125,7 +150,7 @@ const InputPanel = ({ onRunPipeline, isLoading, finalOutput, resultData }) => {
 
     } catch (error) {
       console.error('Chat API error:', error);
-      
+
       // Remove typing indicator and add error message
       setChatHistory(prev => {
         const withoutTyping = prev.slice(0, -1);
@@ -138,7 +163,7 @@ const InputPanel = ({ onRunPipeline, isLoading, finalOutput, resultData }) => {
     }
   };
 
-  
+
 
   // Auto-scroll chat to bottom when new messages are added
   useEffect(() => {
@@ -249,9 +274,17 @@ I need a mobile app for task management with user authentication, offline sync, 
                 >
                   💾 Download
                 </button>
+                <button
+                  onClick={handleCopyToClipboard}
+                  disabled={!fileContent.trim() && !resultData}
+                  className="px-2 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-xs rounded"
+                  title="Copy content to clipboard"
+                >
+                  Copy to Clipboard
+                </button>
               </div>
             </div>
-            
+
             <div className="border-2 border-dashed border-gray-600 rounded-lg p-4 text-center mb-4">
               <input
                 type="file"
