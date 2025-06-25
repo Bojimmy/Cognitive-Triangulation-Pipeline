@@ -408,7 +408,7 @@ export default function App() {
     setResultData(null);
 
     try {
-      const response = await fetch('http://0.0.0.0:5002/api/process', {
+      const response = await fetch('/api/process', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -446,7 +446,7 @@ export default function App() {
       
       <NodePalette />
       
-      <div className="flex-1 relative">
+      <div className="flex-1 relative h-screen">
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           {selectedNodes.length > 0 && (
             <button
@@ -458,7 +458,7 @@ export default function App() {
           )}
         </div>
         
-        <div className="w-full h-screen" ref={reactFlowWrapper} style={{ width: '100%', height: '100vh' }}>
+        <div className="w-full h-full" ref={reactFlowWrapper}
           <ReactFlow
             nodes={nodes}
             edges={edges}
