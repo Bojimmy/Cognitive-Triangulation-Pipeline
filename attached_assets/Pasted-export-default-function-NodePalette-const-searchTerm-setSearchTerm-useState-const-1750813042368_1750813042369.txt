@@ -1,0 +1,71 @@
+export default function NodePalette() {
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredNodeTypes = nodeTypes.map(category => ({
+    ...category,
+    nodes: category.nodes.filter(node =>
+      node.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      node.description.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+  })).filter(category => category.nodes.length > 0);
+
+  const handleDragStart = (event: React.DragEvent, nodeType: any) => {
+    event.dataTransfer.setData("application/reactflow", JSON.stringify({
+      type: nodeType.type,
+      label: nodeType.label,
+      description: nodeType.description,
+    }));
+    event.dataTransfer.effectAllowed = "move";
+  };
+
+  return (
+    <aside className="w-64 bg-white border-r border-slate-200 overflow-y-auto">
+      <div className="p-4">
+        <div className="mb-4">
+          <h2 className="text-sm font-semibold text-slate-800 mb-3">Agent Nodes</h2>
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search nodes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+          </div>
+        </div>
+
+        {filteredNodeTypes.map((category) => (
+          <div key={category.category} className="mb-6">
+            <h3 className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-2">
+              {category.category}
+            </h3>
+            <div className="space-y-2">
+              {category.nodes.map((node) => {
+                const IconComponent = node.icon;
+                return (
+                  <div
+                    key={node.type}
+                    className={`node-palette-item p-3 border border-slate-200 rounded-lg bg-gradient-to-r ${node.gradient} cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-[1.02] hover:shadow-md`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, node)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-8 h-8 ${node.iconBg} rounded-lg flex items-center justify-center`}>
+                        <IconComponent className="text-white" size={12} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-slate-800">{node.label}</div>
+                        <div className="text-xs text-slate-600">{node.description}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </aside>
+  );
+}
