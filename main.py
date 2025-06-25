@@ -103,12 +103,24 @@ class AnalystXAgent(BaseXAgent):
 
     def _generate_xml(self, result: dict) -> str:
         """Generate analysis XML for Product Manager"""
+        escaped_content = self._escape_xml_content(result['content'])
         return f"""<?xml version="1.0" encoding="UTF-8"?>
 <AnalysisPacket>
     <Domain>{result['domain']}</Domain>
     <Complexity>{result['complexity']}</Complexity>
-    <Content>{result['content']}</Content>
+    <Content>{escaped_content}</Content>
 </AnalysisPacket>"""
+
+    def _escape_xml_content(self, content: str) -> str:
+        """Properly escape XML special characters"""
+        if not content:
+            return ''
+        return (content
+                .replace('&', '&amp;')   # Must be first to avoid double-escaping
+                .replace('<', '&lt;')
+                .replace('>', '&gt;')
+                .replace('"', '&quot;')
+                .replace("'", '&apos;'))
 
 
 class ProductManagerXAgent(BaseXAgent):
