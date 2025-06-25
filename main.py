@@ -985,12 +985,24 @@ class XAgentPipeline:
         self.scrum_master = POScrumMasterXAgent()
         self.max_iterations = 3
 
+    def _escape_xml_content(self, content: str) -> str:
+        """Properly escape XML special characters"""
+        if not content:
+            return ''
+        return (content
+                .replace('&', '&amp;')   # Must be first to avoid double-escaping
+                .replace('<', '&lt;')
+                .replace('>', '&gt;')
+                .replace('"', '&quot;')
+                .replace("'", '&apos;'))
+
     def execute(self, document_content: str) -> dict:
         """Execute pipeline with PM-Scrum Master feedback loop"""
 
         logger.info("🔍 Step 1: Document Analysis (runs once)")
-        # Step 1: Analyst runs once
-        document_xml = f"<?xml version='1.0'?><Document>{document_content}</Document>"
+        # Step 1: Analyst runs once - properly escape XML content
+        escaped_content = self._escape_xml_content(document_content)
+        document_xml = f"<?xml version='1.0' encoding='UTF-8'?><Document>{escaped_content}</Document>"
         analysis_xml = self.analyst.process(document_xml)
 
         logger.info("📋 Step 2: Starting PM → Task Manager → Scrum Master cycle")
