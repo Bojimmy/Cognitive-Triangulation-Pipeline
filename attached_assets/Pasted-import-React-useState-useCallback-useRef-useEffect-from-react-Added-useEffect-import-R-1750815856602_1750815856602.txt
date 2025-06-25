@@ -1,0 +1,134 @@
+import React, { useState, useCallback, useRef, useEffect } from 'react'; // Added useEffect
+import ReactFlow, {
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  MarkerType,
+  Handle,
+  Position,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+import './App.css';
+import InputPanel from './InputPanel';
+import ResultsPanel from './ResultsPanel';
+
+// --- All your Custom Node Components and Node Palette remain the same. They are great! ---
+// (AnalystNode, ProductManagerNode, etc. would be here)
+// ...
+
+const initialNodes = [
+  // ... your initialNodes are fine ...
+];
+const initialEdges = [
+  // ... your initialEdges are fine ...
+];
+
+export default function App() {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [selectedNodes, setSelectedNodes] = useState([]);
+  const [resultData, setResultData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const reactFlowWrapper = useRef(null);
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+
+  const onConnect = useCallback(
+    (params) => setEdges((eds) => addEdge({ ...params, markerEnd: { type: MarkerType.ArrowClosed } }, eds)),
+    [],
+  );
+
+  // ... (onDragOver, onDrop, onSelectionChange, deleteSelectedNodes are all fine) ...
+  const onDragOver = useCallback((event) => { /* ... no changes ... */ }, []);
+  const onDrop = useCallback((event) => { /* ... no changes ... */ }, [reactFlowInstance, nodes]);
+  const onSelectionChange = useCallback((elements) => { /* ... no changes ... */ }, []);
+  const deleteSelectedNodes = useCallback(() => { /* ... no changes ... */ }, [selectedNodes, setNodes, setEdges]);
+  useEffect(() => { /* ... no changes ... */ }, [deleteSelectedNodes, selectedNodes]);
+
+
+  // --- FIX #2: Correcting the API call to match the Python backend ---
+  const handleRunPipeline = async (inputText) => {
+    setIsLoading(true);
+    setResultData(null);
+
+    try {
+      const response = await fetch('/api/process', {
+        method: 'POST',
+        // The backend expects raw text/xml, not a JSON object.
+        headers: {
+          'Content-Type': 'text/plain', 
+        },
+        // Send the inputText directly as the body.
+        body: inputText 
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // The backend sends back XML as text, so we read it as text.
+      const textData = await response.text();
+      setResultData(textData);
+
+    } catch (error) {
+      console.error('Error:', error);
+      // Updated error message for clarity
+      setResultData(`Error: ${error.message}\n\nIs the Python backend running correctly in Replit?`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  return (
+    // --- FIX #1: Restructuring the main layout to have 3 columns ---
+    <div className="flex h-screen bg-gray-100 font-sans">
+      
+      {/* Column 1: Node Palette */}
+      <NodePalette />
+      
+      {/* Column 2: The Main Canvas (takes up the most space) */}
+      <div className="flex-1 relative h-screen">
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          {selectedNodes.length > 0 && (
+            <button
+              onClick={deleteSelectedNodes}
+              className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded shadow"
+            >
+              Delete Selected ({selectedNodes.length})
+            </button>
+          )}
+        </div>
+        
+        <div className="w-full h-full" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={setReactFlowInstance}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            onSelectionChange={onSelectionChange}
+            nodeTypes={nodeTypes}
+            fitView
+            attributionPosition="top-right"
+          >
+            <MiniMap />
+            <Controls />
+            <Background color="#aaa" gap={16} />
+          </ReactFlow>
+        </div>
+      </div>
+
+      {/* Column 3: Input and Results Panels */}
+      <div className="w-96 flex flex-col border-l border-slate-200">
+        <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} />
+        <ResultsPanel resultData={resultData} isLoading={isLoading} />
+      </div>
+    </div>
+  );
+}
