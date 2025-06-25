@@ -111,41 +111,29 @@ class ProductManagerXAgent(BaseXAgent):
         return self._extract_requirements(domain, content)
     
     def _extract_requirements(self, domain: str, content: str, feedback_context: str = None) -> dict:
-        """Extract requirements from content with optional feedback adjustments"""
+        """Extract requirements from content with intelligent natural language processing"""
         
-        # Extract REQ-xxx patterns
-        req_pattern = r'REQ-(\d+)[:\s]+(.*?)(?=\n|REQ-|\Z)'
         requirements = []
         
+        # First, try to extract explicit REQ-xxx patterns
+        req_pattern = r'REQ-(\d+)[:\s]+(.*?)(?=\n|REQ-|\Z)'
         for match in re.finditer(req_pattern, content, re.DOTALL):
             requirements.append({
                 'id': f"REQ-{match.group(1).zfill(3)}",
-                'title': match.group(2).strip()[:50],
-                'priority': 'high' if 'critical' in match.group(2).lower() else 'medium'
+                'title': match.group(2).strip()[:100],  # Increased length
+                'priority': 'high' if any(word in match.group(2).lower() for word in ['critical', 'must', 'essential', 'required']) else 'medium'
             })
         
-        # If no explicit requirements found, generate from content
+        # If no explicit requirements found, use intelligent extraction
         if not requirements:
-            words = content.split()
-            for i in range(min(5, len(words) // 20)):
-                requirements.append({
-                    'id': f"REQ-{i+1:03d}",
-                    'title': f"Implement {' '.join(words[i*20:(i+1)*20])}"[:50],
-                    'priority': 'medium'
-                })
+            requirements = self._extract_natural_language_requirements(content)
         
         # Apply feedback adjustments if provided
         if feedback_context:
             requirements = self._apply_feedback_to_requirements(requirements, feedback_context)
         
-        # Basic stakeholder detection
-        stakeholders = []
-        if 'user' in content:
-            stakeholders.append('End Users')
-        if 'developer' in content:
-            stakeholders.append('Development Team')
-        if 'business' in content:
-            stakeholders.append('Business Stakeholders')
+        # Enhanced stakeholder detection
+        stakeholders = self._detect_stakeholders(content)
         
         return {
             'domain': domain,
@@ -154,6 +142,132 @@ class ProductManagerXAgent(BaseXAgent):
             'req_count': len(requirements),
             'feedback_applied': feedback_context is not None
         }
+    
+    def _extract_natural_language_requirements(self, content: str) -> list:
+        """Extract meaningful requirements from natural language text"""
+        requirements = []
+        content_lower = content.lower()
+        
+        # Define requirement patterns and keywords
+        requirement_patterns = [
+            # API and Integration patterns
+            (r'api\s+for\s+([^.]+)', 'API Integration', 'high'),
+            (r'integrate\s+with\s+([^.]+)', 'System Integration', 'high'),
+            (r'third[- ]party\s+([^.]+)', 'Third-Party Integration', 'medium'),
+            
+            # Mobile and Web patterns
+            (r'mobile\s+app\s+for\s+([^.]+)', 'Mobile Application', 'high'),
+            (r'web\s+app\s+for\s+([^.]+)', 'Web Application', 'high'),
+            (r'dashboard\s+for\s+([^.]+)', 'Dashboard Interface', 'medium'),
+            
+            # Security and Compliance
+            (r'security\s+([^.]+)', 'Security Framework', 'high'),
+            (r'privacy\s+([^.]+)', 'Privacy Compliance', 'high'),
+            (r'compliance\s+([^.]+)', 'Regulatory Compliance', 'high'),
+            (r'authentication\s+([^.]+)', 'User Authentication', 'high'),
+            
+            # Performance and Reliability
+            (r'(\d+\.?\d*%)\s+uptime', 'System Reliability', 'high'),
+            (r'real[- ]time\s+([^.]+)', 'Real-Time Processing', 'high'),
+            (r'performance\s+([^.]+)', 'Performance Requirements', 'medium'),
+            
+            # Data and Analytics
+            (r'analytics\s+([^.]+)', 'Analytics Platform', 'medium'),
+            (r'reporting\s+([^.]+)', 'Reporting System', 'medium'),
+            (r'data\s+([^.]+)', 'Data Management', 'medium'),
+            
+            # User Experience
+            (r'user\s+interface\s+for\s+([^.]+)', 'User Interface', 'medium'),
+            (r'notification\s+([^.]+)', 'Notification System', 'medium'),
+            (r'alert\s+([^.]+)', 'Alert System', 'medium'),
+        ]
+        
+        req_id = 1
+        found_requirements = set()  # Prevent duplicates
+        
+        # Extract using patterns
+        for pattern, req_type, priority in requirement_patterns:
+            matches = re.finditer(pattern, content_lower)
+            for match in matches:
+                context = match.group(1).strip()[:60]  # Get context
+                title = f"{req_type}: {context}"
+                
+                if title not in found_requirements and len(context) > 3:
+                    requirements.append({
+                        'id': f"REQ-{req_id:03d}",
+                        'title': title.title(),
+                        'priority': priority
+                    })
+                    found_requirements.add(title)
+                    req_id += 1
+        
+        # Extract sentence-based requirements
+        sentences = re.split(r'[.!?]+', content)
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if len(sentence) > 20:  # Skip very short sentences
+                # Look for requirement indicators
+                requirement_indicators = [
+                    'need', 'require', 'must', 'should', 'implement', 'develop',
+                    'create', 'build', 'support', 'provide', 'enable', 'allow'
+                ]
+                
+                sentence_lower = sentence.lower()
+                if any(indicator in sentence_lower for indicator in requirement_indicators):
+                    # Clean up the sentence for requirement title
+                    clean_sentence = sentence.replace('\n', ' ').strip()
+                    if len(clean_sentence) > 10 and clean_sentence not in found_requirements:
+                        priority = 'high' if any(word in sentence_lower for word in ['critical', 'must', 'essential']) else 'medium'
+                        requirements.append({
+                            'id': f"REQ-{req_id:03d}",
+                            'title': clean_sentence[:100],  # Limit length
+                            'priority': priority
+                        })
+                        found_requirements.add(clean_sentence)
+                        req_id += 1
+                        
+                        if len(requirements) >= 12:  # Limit total requirements
+                            break
+        
+        # If still no requirements, create basic functional requirements
+        if not requirements:
+            basic_reqs = [
+                "Core System Functionality",
+                "User Interface Implementation",
+                "Data Management System",
+                "Security and Authentication",
+                "Performance Optimization"
+            ]
+            
+            for i, req_title in enumerate(basic_reqs):
+                requirements.append({
+                    'id': f"REQ-{i+1:03d}",
+                    'title': req_title,
+                    'priority': 'medium'
+                })
+        
+        return requirements[:10]  # Limit to 10 requirements max
+    
+    def _detect_stakeholders(self, content: str) -> list:
+        """Enhanced stakeholder detection"""
+        stakeholders = []
+        content_lower = content.lower()
+        
+        stakeholder_patterns = {
+            'End Users': ['user', 'citizen', 'customer', 'client', 'consumer'],
+            'Development Team': ['developer', 'engineer', 'programmer', 'technical team'],
+            'Business Stakeholders': ['business', 'management', 'executive', 'stakeholder'],
+            'System Administrators': ['admin', 'administrator', 'ops', 'devops'],
+            'Government Agencies': ['government', 'agency', 'municipal', 'city', 'public'],
+            'Emergency Services': ['emergency', 'police', 'fire', 'ambulance', 'first responder'],
+            'Traffic Authorities': ['traffic', 'transportation', 'transit', 'dot']
+        }
+        
+        for stakeholder, keywords in stakeholder_patterns.items():
+            if any(keyword in content_lower for keyword in keywords):
+                stakeholders.append(stakeholder)
+        
+        return stakeholders if stakeholders else ['End Users', 'Development Team']
     
     def _process_scrum_feedback(self, feedback_input: etree.Element) -> dict:
         """Process feedback from Scrum Master and create updated PRD"""
@@ -271,21 +385,29 @@ class TaskManagerXAgent(BaseXAgent):
             for pattern in patterns:
                 # Adjust effort based on priority
                 base_points = 3 if pattern == 'Implement' else 2
-                base_hours = 12 if pattern == 'Implement' else 8
                 
                 if req_priority == 'high':
                     story_points = base_points + 1
-                    hours = base_hours + 4
                 else:
                     story_points = base_points
-                    hours = base_hours
+                
+                # Create meaningful task titles without truncation
+                if pattern == 'Design':
+                    task_title = f"Design architecture and specifications for {req_title[:60]}"
+                elif pattern == 'Implement':
+                    task_title = f"Develop and implement {req_title[:60]}"
+                elif pattern == 'Test':
+                    task_title = f"Test and validate {req_title[:60]}"
+                elif pattern == 'Document':
+                    task_title = f"Create documentation for {req_title[:60]}"
+                else:
+                    task_title = f"{pattern} {req_title[:60]}"
                 
                 tasks.append({
                     'id': f"TASK-{task_id:03d}",
-                    'title': f"{pattern} {req_title[:30]}",
+                    'title': task_title,
                     'req_id': req_id,
                     'story_points': story_points,
-                    'hours': hours,
                     'priority': req_priority
                 })
                 task_id += 1

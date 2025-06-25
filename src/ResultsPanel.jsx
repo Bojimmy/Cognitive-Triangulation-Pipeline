@@ -183,21 +183,21 @@ const ResultsPanel = ({ resultData, isLoading }) => {
             {parsedResult.type === 'complete' && parsedResult.requirements.length > 0 && (
               <div className="bg-gray-800 p-4 rounded-lg">
                 <h4 className="text-sm font-semibold text-white mb-3">
-                  Requirements ({parsedResult.requirements.length})
+                  📋 Requirements ({parsedResult.requirements.length})
                 </h4>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {parsedResult.requirements.map((req, index) => (
-                    <div key={index} className="flex items-start space-x-3 p-2 bg-gray-900 rounded">
-                      <span className={`px-2 py-1 text-xs rounded font-medium ${
-                        req.priority === 'high' ? 'bg-red-600 text-white' :
-                        req.priority === 'medium' ? 'bg-yellow-600 text-white' : 'bg-green-600 text-white'
-                      }`}>
-                        {req.priority}
-                      </span>
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-blue-300">{req.id}</div>
-                        <div className="text-sm text-gray-300">{req.title}</div>
+                    <div key={index} className="p-3 bg-gray-900 rounded-lg border-l-4 border-blue-500">
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="text-sm font-bold text-blue-300">{req.id}</span>
+                        <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                          req.priority === 'high' ? 'bg-red-600 text-white' :
+                          req.priority === 'medium' ? 'bg-yellow-600 text-white' : 'bg-green-600 text-white'
+                        }`}>
+                          {req.priority.toUpperCase()}
+                        </span>
                       </div>
+                      <div className="text-sm text-gray-200 leading-relaxed">{req.title}</div>
                     </div>
                   ))}
                 </div>
