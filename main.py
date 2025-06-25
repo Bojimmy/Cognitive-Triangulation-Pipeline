@@ -575,9 +575,30 @@ def chat_with_llm():
         # Get API key from environment
         api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('LLM_API_KEY')
         if not api_key:
-            return jsonify({
-                "response": "I'm here to help you structure requirements for the X-Agents pipeline. Please add your LLM API key to Secrets to enable AI responses. For now, consider formatting your requirements as REQ-001, REQ-002, etc."
-            }), 200
+            # Provide structured guidance for mobile app requirements
+            mobile_guidance = """I'm here to help you structure requirements for your mobile app! Since no API key is configured, here's a structured approach:
+
+**Mobile App Requirements Structure:**
+
+REQ-001: Platform Support (iOS, Android, or both)
+REQ-002: User Authentication (login/registration system)
+REQ-003: Core User Interface (main screens and navigation)
+REQ-004: Data Storage (local vs cloud storage needs)
+REQ-005: Offline Functionality (what works without internet)
+REQ-006: Push Notifications (user engagement features)
+REQ-007: Performance Requirements (load times, responsiveness)
+REQ-008: Security Requirements (data encryption, secure APIs)
+
+**Key Questions to Consider:**
+- Who is your target user?
+- What's the main problem your app solves?
+- What platforms do you want to support?
+- Do you need real-time features?
+- What data does your app collect/store?
+
+Format your specific requirements as REQ-001: Description, REQ-002: Description, etc."""
+            
+            return jsonify({"response": mobile_guidance}), 200
         
         # Prepare system prompt for requirements gathering
         system_prompt = """You are an AI assistant helping users gather and structure software requirements for an intelligent agent pipeline. 
@@ -587,8 +608,9 @@ Your role is to:
 2. Guide them to structure requirements in REQ-001, REQ-002 format
 3. Ask clarifying questions about scope, stakeholders, and technical constraints
 4. Suggest breaking down complex requirements into smaller, manageable pieces
+5. For mobile apps, focus on platform, user experience, data flow, and performance requirements
 
-Keep responses concise and focused on requirements gathering."""
+Keep responses concise and focused on requirements gathering. Always format requirements as REQ-001: Description, REQ-002: Description, etc."""
         
         # Build conversation context
         messages = [{"role": "system", "content": system_prompt}]
@@ -650,4 +672,4 @@ if __name__ == "__main__":
     print("   • PM ↔ Scrum Master feedback loop (max 3 iterations)")
     print("   • Automatic scope reduction and quality improvement")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
