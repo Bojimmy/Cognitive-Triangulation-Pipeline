@@ -403,11 +403,15 @@ class TaskManagerXAgent(BaseXAgent):
                 else:
                     task_title = f"{pattern} {req_title[:60]}"
                 
+                # Calculate hours based on story points (rough estimate: 3-4 hours per story point)
+                estimated_hours = story_points * 3.5
+                
                 tasks.append({
                     'id': f"TASK-{task_id:03d}",
                     'title': task_title,
                     'req_id': req_id,
                     'story_points': story_points,
+                    'hours': int(estimated_hours),
                     'priority': req_priority
                 })
                 task_id += 1
