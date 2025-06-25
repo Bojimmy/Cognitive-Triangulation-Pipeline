@@ -144,109 +144,249 @@ class ProductManagerXAgent(BaseXAgent):
         }
     
     def _extract_natural_language_requirements(self, content: str) -> list:
-        """Extract meaningful requirements from natural language text"""
+        """Extract meaningful, actionable requirements using semantic analysis"""
         requirements = []
         content_lower = content.lower()
         
-        # Define requirement patterns and keywords
-        requirement_patterns = [
-            # API and Integration patterns
-            (r'api\s+for\s+([^.]+)', 'API Integration', 'high'),
-            (r'integrate\s+with\s+([^.]+)', 'System Integration', 'high'),
-            (r'third[- ]party\s+([^.]+)', 'Third-Party Integration', 'medium'),
-            
-            # Mobile and Web patterns
-            (r'mobile\s+app\s+for\s+([^.]+)', 'Mobile Application', 'high'),
-            (r'web\s+app\s+for\s+([^.]+)', 'Web Application', 'high'),
-            (r'dashboard\s+for\s+([^.]+)', 'Dashboard Interface', 'medium'),
-            
-            # Security and Compliance
-            (r'security\s+([^.]+)', 'Security Framework', 'high'),
-            (r'privacy\s+([^.]+)', 'Privacy Compliance', 'high'),
-            (r'compliance\s+([^.]+)', 'Regulatory Compliance', 'high'),
-            (r'authentication\s+([^.]+)', 'User Authentication', 'high'),
-            
-            # Performance and Reliability
-            (r'(\d+\.?\d*%)\s+uptime', 'System Reliability', 'high'),
-            (r'real[- ]time\s+([^.]+)', 'Real-Time Processing', 'high'),
-            (r'performance\s+([^.]+)', 'Performance Requirements', 'medium'),
-            
-            # Data and Analytics
-            (r'analytics\s+([^.]+)', 'Analytics Platform', 'medium'),
-            (r'reporting\s+([^.]+)', 'Reporting System', 'medium'),
-            (r'data\s+([^.]+)', 'Data Management', 'medium'),
-            
-            # User Experience
-            (r'user\s+interface\s+for\s+([^.]+)', 'User Interface', 'medium'),
-            (r'notification\s+([^.]+)', 'Notification System', 'medium'),
-            (r'alert\s+([^.]+)', 'Alert System', 'medium'),
-        ]
+        # Domain-specific semantic analysis for traffic management systems
+        if any(term in content_lower for term in ['traffic', 'transportation', 'smart city', 'municipal', 'emergency']):
+            requirements.extend(self._extract_traffic_management_requirements(content))
         
-        req_id = 1
-        found_requirements = set()  # Prevent duplicates
+        # Domain-specific analysis for enterprise systems
+        elif any(term in content_lower for term in ['enterprise', 'business', 'corporate', 'organization']):
+            requirements.extend(self._extract_enterprise_requirements(content))
         
-        # Extract using patterns
-        for pattern, req_type, priority in requirement_patterns:
-            matches = re.finditer(pattern, content_lower)
-            for match in matches:
-                context = match.group(1).strip()[:60]  # Get context
-                title = f"{req_type}: {context}"
-                
-                if title not in found_requirements and len(context) > 3:
-                    requirements.append({
-                        'id': f"REQ-{req_id:03d}",
-                        'title': title.title(),
-                        'priority': priority
-                    })
-                    found_requirements.add(title)
-                    req_id += 1
+        # Domain-specific analysis for mobile/web applications
+        elif any(term in content_lower for term in ['mobile', 'app', 'web', 'dashboard', 'ui', 'interface']):
+            requirements.extend(self._extract_application_requirements(content))
         
-        # Extract sentence-based requirements
-        sentences = re.split(r'[.!?]+', content)
-        for sentence in sentences:
-            sentence = sentence.strip()
-            if len(sentence) > 20:  # Skip very short sentences
-                # Look for requirement indicators
-                requirement_indicators = [
-                    'need', 'require', 'must', 'should', 'implement', 'develop',
-                    'create', 'build', 'support', 'provide', 'enable', 'allow'
-                ]
-                
-                sentence_lower = sentence.lower()
-                if any(indicator in sentence_lower for indicator in requirement_indicators):
-                    # Clean up the sentence for requirement title
-                    clean_sentence = sentence.replace('\n', ' ').strip()
-                    if len(clean_sentence) > 10 and clean_sentence not in found_requirements:
-                        priority = 'high' if any(word in sentence_lower for word in ['critical', 'must', 'essential']) else 'medium'
-                        requirements.append({
-                            'id': f"REQ-{req_id:03d}",
-                            'title': clean_sentence[:100],  # Limit length
-                            'priority': priority
-                        })
-                        found_requirements.add(clean_sentence)
-                        req_id += 1
-                        
-                        if len(requirements) >= 12:  # Limit total requirements
-                            break
-        
-        # If still no requirements, create basic functional requirements
+        # General system requirements if no specific domain detected
         if not requirements:
-            basic_reqs = [
-                "Core System Functionality",
-                "User Interface Implementation",
-                "Data Management System",
-                "Security and Authentication",
-                "Performance Optimization"
-            ]
-            
-            for i, req_title in enumerate(basic_reqs):
-                requirements.append({
-                    'id': f"REQ-{i+1:03d}",
-                    'title': req_title,
-                    'priority': 'medium'
-                })
+            requirements.extend(self._extract_general_system_requirements(content))
         
-        return requirements[:10]  # Limit to 10 requirements max
+        # Always add cross-cutting concerns based on content analysis
+        requirements.extend(self._extract_cross_cutting_requirements(content))
+        
+        # Remove duplicates and prioritize
+        unique_requirements = self._deduplicate_and_prioritize(requirements)
+        
+        return unique_requirements[:8]  # Limit to 8 high-quality requirements
+    
+    def _extract_traffic_management_requirements(self, content: str) -> list:
+        """Extract traffic management specific requirements"""
+        requirements = []
+        content_lower = content.lower()
+        
+        # Core traffic management capabilities
+        if any(term in content_lower for term in ['camera', 'sensor', 'monitoring', 'detection']):
+            requirements.append({
+                'title': 'Traffic Camera Integration and Sensor Network Management',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['mobile', 'citizen', 'public', 'user']):
+            requirements.append({
+                'title': 'Mobile Application for Citizen Traffic Information and Reporting',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['emergency', 'ambulance', 'fire', 'police', 'routing']):
+            requirements.append({
+                'title': 'Emergency Vehicle Priority Routing and Traffic Signal Control',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['analytics', 'dashboard', 'planning', 'data', 'insight']):
+            requirements.append({
+                'title': 'Traffic Analytics Dashboard for Urban Planning and Operations',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['api', 'third-party', 'integration', 'external']):
+            requirements.append({
+                'title': 'RESTful API for Third-Party Traffic Data Integration',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['environment', 'air quality', 'pollution', 'green']):
+            requirements.append({
+                'title': 'Environmental Impact Monitoring and Air Quality Integration',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        return requirements
+    
+    def _extract_enterprise_requirements(self, content: str) -> list:
+        """Extract enterprise system specific requirements"""
+        requirements = []
+        content_lower = content.lower()
+        
+        if any(term in content_lower for term in ['workflow', 'process', 'automation']):
+            requirements.append({
+                'title': 'Business Process Workflow Automation Engine',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['user', 'employee', 'staff', 'personnel']):
+            requirements.append({
+                'title': 'Enterprise User Management and Role-Based Access Control',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['report', 'analytics', 'dashboard', 'business intelligence']):
+            requirements.append({
+                'title': 'Executive Dashboard and Business Intelligence Reporting',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['integration', 'erp', 'crm', 'legacy']):
+            requirements.append({
+                'title': 'Legacy System Integration and Enterprise Data Synchronization',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        return requirements
+    
+    def _extract_application_requirements(self, content: str) -> list:
+        """Extract mobile/web application specific requirements"""
+        requirements = []
+        content_lower = content.lower()
+        
+        if any(term in content_lower for term in ['mobile', 'ios', 'android', 'app']):
+            requirements.append({
+                'title': 'Cross-Platform Mobile Application with Native Performance',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['web', 'browser', 'responsive', 'ui', 'interface']):
+            requirements.append({
+                'title': 'Responsive Web Interface with Modern User Experience',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['notification', 'alert', 'push', 'messaging']):
+            requirements.append({
+                'title': 'Real-Time Push Notification and Alert System',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        if any(term in content_lower for term in ['offline', 'sync', 'cache', 'local']):
+            requirements.append({
+                'title': 'Offline Capability with Automatic Data Synchronization',
+                'priority': 'medium',
+                'category': 'functional'
+            })
+        
+        return requirements
+    
+    def _extract_general_system_requirements(self, content: str) -> list:
+        """Extract general system requirements when no specific domain is detected"""
+        requirements = []
+        
+        requirements.append({
+            'title': 'Core System Architecture and Data Management Framework',
+            'priority': 'high',
+            'category': 'functional'
+        })
+        
+        requirements.append({
+            'title': 'User Interface and User Experience Implementation',
+            'priority': 'high',
+            'category': 'functional'
+        })
+        
+        requirements.append({
+            'title': 'API Development and Integration Capabilities',
+            'priority': 'medium',
+            'category': 'functional'
+        })
+        
+        requirements.append({
+            'title': 'Data Analytics and Reporting System',
+            'priority': 'medium',
+            'category': 'functional'
+        })
+        
+        return requirements
+    
+    def _extract_cross_cutting_requirements(self, content: str) -> list:
+        """Extract cross-cutting concerns (security, performance, compliance)"""
+        requirements = []
+        content_lower = content.lower()
+        
+        # Security requirements
+        if any(term in content_lower for term in ['security', 'cyber', 'encryption', 'auth', 'secure', 'protection']):
+            requirements.append({
+                'title': 'Comprehensive Cybersecurity Framework and Data Protection',
+                'priority': 'high',
+                'category': 'non-functional'
+            })
+        
+        # Performance requirements
+        uptime_match = re.search(r'(\d+\.?\d*)%\s*uptime', content_lower)
+        if uptime_match or any(term in content_lower for term in ['performance', 'scalability', 'reliability', 'availability']):
+            uptime_target = uptime_match.group(1) if uptime_match else "99.9"
+            requirements.append({
+                'title': f'System Reliability and Performance ({uptime_target}% uptime requirement)',
+                'priority': 'high',
+                'category': 'non-functional'
+            })
+        
+        # Compliance requirements
+        if any(term in content_lower for term in ['compliance', 'regulation', 'privacy', 'gdpr', 'hipaa', 'legal']):
+            requirements.append({
+                'title': 'Regulatory Compliance and Privacy Protection Implementation',
+                'priority': 'high',
+                'category': 'non-functional'
+            })
+        
+        # Real-time processing
+        if any(term in content_lower for term in ['real-time', 'realtime', 'instant', 'immediate', 'live']):
+            requirements.append({
+                'title': 'Real-Time Data Processing and Event Handling System',
+                'priority': 'high',
+                'category': 'non-functional'
+            })
+        
+        return requirements
+    
+    def _deduplicate_and_prioritize(self, requirements: list) -> list:
+        """Remove duplicates and ensure proper prioritization"""
+        seen_titles = set()
+        unique_reqs = []
+        req_id = 1
+        
+        # Sort by priority (high first) and category (functional first)
+        sorted_reqs = sorted(requirements, key=lambda x: (
+            0 if x['priority'] == 'high' else 1,
+            0 if x['category'] == 'functional' else 1
+        ))
+        
+        for req in sorted_reqs:
+            title = req['title']
+            if title not in seen_titles:
+                unique_reqs.append({
+                    'id': f"REQ-{req_id:03d}",
+                    'title': title,
+                    'priority': req['priority']
+                })
+                seen_titles.add(title)
+                req_id += 1
+        
+        return unique_reqs
     
     def _detect_stakeholders(self, content: str) -> list:
         """Enhanced stakeholder detection"""
