@@ -454,6 +454,8 @@ class XAgentPipeline:
         # Step 2: PM → Task Manager → Scrum Master cycle
         current_input = analysis_xml
         iteration = 0
+        final_pm_output = None
+        final_task_output = None
         
         while iteration < self.max_iterations:
             iteration += 1
@@ -462,10 +464,12 @@ class XAgentPipeline:
             # Product Manager processes (initial analysis or feedback)
             logger.info("📋 Product Manager: Creating/updating requirements")
             pm_output = self.product_manager.process(current_input)
+            final_pm_output = pm_output  # Store latest PM output
             
             # Task Manager breaks down requirements
             logger.info("🔧 Task Manager: Breaking down into tasks")
             task_output = self.task_manager.process(pm_output)
+            final_task_output = task_output  # Store latest task breakdown
             
             # Scrum Master reviews and approves/rejects
             logger.info("✅ Scrum Master: Reviewing for approval")
@@ -478,10 +482,14 @@ class XAgentPipeline:
             
             if approved:
                 logger.info(f"\n🎉 PROJECT APPROVED after {iteration} iteration(s)!")
+                # Create comprehensive result with all pipeline outputs
+                complete_result = self._create_complete_result(
+                    analysis_xml, final_pm_output, final_task_output, approval_output, iteration, 'APPROVED'
+                )
                 return {
                     'success': True,
                     'iterations': iteration,
-                    'final_output': approval_output,
+                    'final_output': complete_result,
                     'status': 'APPROVED'
                 }
             
@@ -489,10 +497,14 @@ class XAgentPipeline:
             
             if iteration >= self.max_iterations:
                 logger.info(f"\n💔 PROJECT REJECTED after {self.max_iterations} iterations")
+                # Create comprehensive result even for rejection
+                complete_result = self._create_complete_result(
+                    analysis_xml, final_pm_output, final_task_output, approval_output, iteration, 'REJECTED'
+                )
                 return {
                     'success': False,
                     'iterations': iteration,
-                    'final_output': approval_output,
+                    'final_output': complete_result,
                     'status': 'REJECTED - Max iterations reached'
                 }
             
@@ -514,6 +526,82 @@ class XAgentPipeline:
     <Feedback>{feedback}</Feedback>
     <OriginalContent>{content}</OriginalContent>
 </FeedbackPacket>"""
+    
+    def _create_complete_result(self, analysis_xml: str, pm_xml: str, task_xml: str, approval_xml: str, iterations: int, status: str) -> str:
+        """Create comprehensive pipeline result with all agent outputs"""
+        
+        # Parse all XML outputs
+        analysis_tree = etree.fromstring(analysis_xml.encode())
+        pm_tree = etree.fromstring(pm_xml.encode())
+        task_tree = etree.fromstring(task_xml.encode())
+        approval_tree = etree.fromstring(approval_xml.encode())
+        
+        # Extract data
+        domain = analysis_tree.find('Domain').text
+        complexity = analysis_tree.find('Complexity').text
+        
+        # Extract requirements
+        requirements = pm_tree.findall('.//Requirement')
+        req_xml = '\n'.join([
+            f'        <Requirement id="{req.get("id")}" priority="{req.get("priority")}">{req.text}</Requirement>'
+            for req in requirements
+        ])
+        
+        # Extract tasks
+        tasks = task_tree.findall('.//Task')
+        task_xml_formatted = '\n'.join([
+            f'        <Task id="{task.get("id")}" req_id="{task.get("req_id")}" points="{task.get("points")}" hours="{task.get("hours")}" priority="{task.get("priority")}">{task.text}</Task>'
+            for task in tasks
+        ])
+        
+        # Extract summary data
+        total_tasks = task_tree.find('.//TotalTasks').text
+        story_points = task_tree.find('.//StoryPoints').text
+        expansion_ratio = task_tree.find('.//ExpansionRatio').text
+        
+        # Extract approval data
+        approved = approval_tree.find('.//Decision').get('approved')
+        quality_score = approval_tree.find('.//QualityScore').text
+        risk_level = approval_tree.find('.//RiskLevel').text
+        feedback = approval_tree.find('Feedback').text
+        
+        # Create comprehensive result
+        return f"""<?xml version="1.0" encoding="UTF-8"?>
+<CompletePipelineResult>
+    <PipelineInfo>
+        <Status>{status}</Status>
+        <Iterations>{iterations}</Iterations>
+        <ProcessingSteps>4</ProcessingSteps>
+    </PipelineInfo>
+    
+    <Analysis>
+        <Domain>{domain}</Domain>
+        <Complexity>{complexity}</Complexity>
+    </Analysis>
+    
+    <Requirements count="{len(requirements)}">
+{req_xml}
+    </Requirements>
+    
+    <TaskBreakdown>
+        <Summary>
+            <TotalTasks>{total_tasks}</TotalTasks>
+            <StoryPoints>{story_points}</StoryPoints>
+            <ExpansionRatio>{expansion_ratio}</ExpansionRatio>
+        </Summary>
+        <Tasks>
+{task_xml_formatted}
+        </Tasks>
+    </TaskBreakdown>
+    
+    <Approval>
+        <Decision approved="{approved}">
+            <QualityScore>{quality_score}</QualityScore>
+            <RiskLevel>{risk_level}</RiskLevel>
+        </Decision>
+        <Feedback>{feedback}</Feedback>
+    </Approval>
+</CompletePipelineResult>"""
 
 
 # Flask Application
