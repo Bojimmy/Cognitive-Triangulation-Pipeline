@@ -1463,7 +1463,9 @@ if __name__ == "__main__":
         print("   • Automatic scope reduction and quality improvement")
         print(f"\n✅ Flask server starting on 0.0.0.0:5002...")
         
-        app.run(host='0.0.0.0', port=5002, debug=False, threaded=True)
+        # Ensure we bind to all interfaces for Replit
+        print("🔧 Binding to 0.0.0.0:5002 for Replit compatibility...")
+        app.run(host='0.0.0.0', port=5002, debug=False, threaded=True, use_reloader=False)
     except Exception as e:
         print(f"❌ Failed to start Flask server: {e}")
         import traceback
