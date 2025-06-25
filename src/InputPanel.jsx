@@ -229,7 +229,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
       {/* Chat Popup */}
       {showChatPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg w-96 h-96 flex flex-col border border-gray-700">
+          <div className="bg-black rounded-lg w-96 h-96 flex flex-col border border-gray-700">
             {/* Chat Header */}
             <div className="flex justify-between items-center p-4 border-b border-gray-700">
               <h3 className="text-sm font-medium text-gray-300">
@@ -263,7 +263,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
             </div>
 
             {/* Chat Messages Area */}
-            <div className="flex-1 p-4 overflow-y-auto bg-gray-900" id="chat-messages">
+            <div className="flex-1 p-4 overflow-y-auto bg-black" id="chat-messages">
               {chatHistory.length === 0 ? (
                 <div className="text-center text-gray-400 text-sm mt-8">
                   <div className="text-3xl mb-3">💬</div>
@@ -277,7 +277,7 @@ const InputPanel = ({ onRunPipeline, isLoading }) => {
                       <div className={`max-w-[90%] px-3 py-2 rounded-lg ${
                         msg.type === 'user' 
                           ? 'bg-blue-600 text-white' 
-                          : 'bg-gray-700 text-gray-100'
+                          : 'bg-gray-700 text-white'
                       }`}>
                         <div className={`text-xs mb-1 ${
                           msg.type === 'user' ? 'text-blue-200' : 'text-gray-400'
