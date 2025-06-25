@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
+
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -339,7 +340,7 @@ export default function App() {
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge({ ...params, markerEnd: { type: MarkerType.ArrowClosed } }, eds)),
-    [],
+    [setEdges],
   );
 
   const onDragOver = useCallback((event) => {
@@ -372,7 +373,7 @@ export default function App() {
 
       setNodes((nds) => nds.concat(newNode));
     },
-    [reactFlowInstance, nodes],
+    [reactFlowInstance, nodes, setNodes],
   );
 
   const onSelectionChange = useCallback((elements) => {
@@ -391,7 +392,7 @@ export default function App() {
   }, [selectedNodes, setNodes, setEdges]);
 
   // Handle keyboard events for deletion
-  React.useEffect(() => {
+  useEffect(() => {
     const handleKeyDown = (event) => {
       if ((event.key === 'Delete' || event.key === 'Backspace') && selectedNodes.length > 0) {
         deleteSelectedNodes();
@@ -410,41 +411,33 @@ export default function App() {
       const response = await fetch('/api/process', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ document: inputText })
+        body: inputText
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
-        setResultData(JSON.stringify(data, null, 2));
-      } else {
-        // Handle XML/text response from Flask backend
-        const textData = await response.text();
-        setResultData(textData);
-      }
+      const textData = await response.text();
+      setResultData(textData);
     } catch (error) {
       console.error('Error:', error);
-      setResultData(`Error: ${error.message}\n\nMake sure the Flask backend is running on port 5002`);
+      setResultData(`Error: ${error.message}\n\nIs the Python backend running correctly in Replit?`);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div className="w-80 flex flex-col">
-        <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} />
-      </div>
-
+    <div className="flex h-screen bg-gray-100 font-sans">
+      
+      {/* Column 1: Node Palette */}
       <NodePalette />
-
-      <div className="flex-1 relative" style={{ height: '100vh', width: '100%' }}>
+      
+      {/* Column 2: The Main Canvas (takes up the most space) */}
+      <div className="flex-1 relative h-screen">
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           {selectedNodes.length > 0 && (
             <button
@@ -455,8 +448,8 @@ export default function App() {
             </button>
           )}
         </div>
-
-        <div className="w-full h-full" ref={reactFlowWrapper} style={{ width: '100%', height: '100%' }}>
+        
+        <div className="w-full h-full" ref={reactFlowWrapper}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -478,7 +471,9 @@ export default function App() {
         </div>
       </div>
 
-      <div className="w-80 flex flex-col">
+      {/* Column 3: Input and Results Panels */}
+      <div className="w-96 flex flex-col border-l border-slate-200">
+        <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} />
         <ResultsPanel resultData={resultData} isLoading={isLoading} />
       </div>
     </div>
