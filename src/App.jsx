@@ -474,7 +474,7 @@ export default function App() {
       <NodePalette />
 
       {/* Column 2: The Main Canvas (takes up the most space) */}
-      <div className="flex-1 relative min-w-0 h-screen">
+      <div className="flex-1 relative min-w-0 h-screen overflow-hidden">
         <div className="absolute top-4 right-4 z-10 flex gap-2">
           {selectedNodes.length > 0 && (
             <button
@@ -488,16 +488,10 @@ export default function App() {
 
         <div 
           ref={reactFlowWrapper}
+          className="absolute inset-0 w-full h-full"
           style={{ 
-            position: 'absolute', 
-            top: 0, 
-            left: 0, 
-            right: 0, 
-            bottom: 0, 
             width: '100%', 
-            height: '100%',
-            minHeight: '400px',
-            minWidth: '600px'
+            height: '100%'
           }}
         >
           <ReactFlow
@@ -509,8 +503,7 @@ export default function App() {
             onSelectionChange={handleSelectionChange}
             nodeTypes={nodeTypes}
             fitView
-            style={{ width: '100%', height: '100%' }}
-            className="bg-slate-50"
+            className="bg-slate-50 w-full h-full"
           >
             <MiniMap />
             <Controls />
@@ -520,7 +513,7 @@ export default function App() {
       </div>
 
       {/* Column 3: Input and Results Panels */}
-      <div className="w-96 flex flex-col border-l border-slate-200">
+      <div className="w-96 flex flex-col border-l border-slate-200 relative z-20 bg-white">
         <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} finalOutput={finalOutput} resultData={resultData} />
         <ResultsPanel resultData={resultData} isLoading={isLoading} />
       </div>
