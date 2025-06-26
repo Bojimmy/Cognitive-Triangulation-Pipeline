@@ -1166,6 +1166,11 @@ if __name__ == "__main__":
     try:
         print("🚀 Starting X-Agent Backend Server with Feedback Loop...")
         print("📡 API available at http://0.0.0.0:5000")
+        print("🔍 DEBUG: Python process started successfully")
+        
+        # Force output flush for parallel mode visibility
+        sys.stdout.flush()
+        sys.stderr.flush()
         print("🔗 Endpoints:")
         print("   POST /api/process - Process documents with feedback loop")
         print("   POST /api/chat    - LLM-powered requirements chat")
@@ -1211,6 +1216,9 @@ if __name__ == "__main__":
         sys.stdout.flush()
         sys.stderr.flush()
 
+        print("🔍 DEBUG: About to start Flask server...")
+        sys.stdout.flush()
+        
         # Start Flask server with explicit settings for Replit
         app.run(
             host='0.0.0.0', 
@@ -1241,10 +1249,15 @@ if __name__ == "__main__":
             import traceback
             traceback.print_exc()
     except Exception as e:
-        print(f"❌ Failed to start Flask server: {e}")
+        print(f"❌ CRITICAL ERROR: Flask server failed to start: {e}")
+        print("🔍 Full error details:")
         import traceback
         traceback.print_exc()
-        print("\n💡 Troubleshooting steps:")
-        print("   1. Stop the current workflow")
-        print("   2. Run 'Flask Backend' workflow separately")
-        print("   3. Check console for specific error messages")
+        
+        # Force error output to be visible in parallel mode
+        sys.stderr.flush()
+        sys.stdout.flush()
+        
+        print("\n💡 This is why your dashboard isn't working!")
+        print("   The Python backend process is crashing, so the React frontend can't connect.")
+        print("   Fix this error to get your Full Stack Dev workflow working.")
