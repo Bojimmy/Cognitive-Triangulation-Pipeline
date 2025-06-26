@@ -41,27 +41,38 @@ class DocumentFormatterXAgent:
         # Clean and normalize content
         cleaned_content = self._clean_content(raw_content)
         
+        # Auto-detect domain if not provided
+        detected_domain = target_domain
+        if not detected_domain:
+            detected_domain = self._auto_detect_domain(cleaned_content)
+        
         # Extract structured components
         components = self._extract_components(cleaned_content)
         
         # Add domain-specific keywords
-        if target_domain:
-            components = self._enhance_with_domain_keywords(components, target_domain)
+        if detected_domain and detected_domain in self.domain_keywords:
+            components = self._enhance_with_domain_keywords(components, detected_domain)
+        else:
+            # Flag for potential plugin creation
+            components['needs_plugin'] = True
+            components['unknown_domain_keywords'] = self._extract_potential_keywords(cleaned_content)
         
         # Format requirements
         formatted_requirements = self._format_requirements(components['requirements'])
         
         # Generate standardized document
         formatted_doc = self._generate_formatted_document(
-            components, formatted_requirements, target_domain
+            components, formatted_requirements, detected_domain
         )
         
         return {
             'formatted_content': formatted_doc,
             'extracted_requirements': formatted_requirements,
-            'identified_domain': target_domain,
+            'identified_domain': detected_domain,
             'stakeholders': components['stakeholders'],
-            'validation_score': self._calculate_validation_score(formatted_doc)
+            'validation_score': self._calculate_validation_score(formatted_doc),
+            'needs_plugin': components.get('needs_plugin', False),
+            'suggested_keywords': components.get('unknown_domain_keywords', [])
         }
     
     def _clean_content(self, content: str) -> str:
@@ -225,6 +236,41 @@ class DocumentFormatterXAgent:
         
         return '\n'.join(doc_parts)
     
+    def _auto_detect_domain(self, content: str) -> str:
+        """Auto-detect domain from content"""
+        content_lower = content.lower()
+        
+        # Score each domain
+        best_domain = 'general'
+        best_score = 0
+        
+        for domain, keywords in self.domain_keywords.items():
+            score = sum(1 for keyword in keywords if keyword in content_lower)
+            if score > best_score:
+                best_score = score
+                best_domain = domain
+        
+        return best_domain if best_score > 0 else 'general'
+    
+    def _extract_potential_keywords(self, content: str) -> List[str]:
+        """Extract potential keywords for unknown domains"""
+        # Extract frequent nouns and technical terms
+        words = re.findall(r'\b[a-zA-Z]{4,15}\b', content.lower())
+        
+        # Filter out common words
+        common_words = {'with', 'that', 'this', 'have', 'will', 'they', 'from', 'been', 
+                       'were', 'said', 'each', 'which', 'their', 'time', 'would', 'there'}
+        
+        filtered_words = [w for w in words if w not in common_words]
+        
+        # Count frequency
+        word_freq = {}
+        for word in filtered_words:
+            word_freq[word] = word_freq.get(word, 0) + 1
+        
+        # Return top 10 most frequent words
+        return [word for word, freq in sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10]]
+
     def _calculate_validation_score(self, formatted_doc: str) -> float:
         """Calculate document validation score"""
         score = 0.0
