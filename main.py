@@ -533,6 +533,107 @@ class XAgentPipeline:
         self.scrum_master = POScrumMasterXAgent()
         self.max_iterations = 3
 
+    def format_document(self, raw_content: str) -> dict:
+        """Step 1: Format document and return for user review"""
+        if not self.document_formatter:
+            return {
+                'success': False, 
+                'error': 'Document formatter not available'
+            }
+            
+        try:
+            logger.info("📝 Step 1: Formatting document for user review")
+            formatted_result = self.document_formatter.format_document(raw_content)
+            
+            return {
+                'success': True,
+                'formatted_content': formatted_result['formatted_content'],
+                'domain': formatted_result['identified_domain'],
+                'requirements': formatted_result['extracted_requirements'],
+                'stakeholders': formatted_result['stakeholders'],
+                'validation_score': formatted_result['validation_score'],
+                'message': 'Document formatted successfully. Review and send to analysis.'
+            }
+        except Exception as e:
+            logger.error(f"Document formatting error: {e}")
+            return {'success': False, 'error': str(e)}
+
+    def execute_with_formatted_input(self, formatted_content: str) -> dict:
+        """Step 2: Execute main pipeline with pre-formatted content"""
+        logger.info("🚀 Step 2: Processing formatted document through main pipeline")
+        
+        # Create XML from formatted content (skip document formatter)
+        document_xml = f"""<?xml version='1.0' encoding='UTF-8'?>
+<Document>
+    <text><![CDATA[{formatted_content}]]></text>
+</Document>"""
+
+        # Continue with existing pipeline starting from Analyst
+        logger.info("🔍 Step 2a: Document Analysis (using formatted input)")
+        analysis_xml = self.analyst.process(document_xml)
+        
+        # Continue with rest of existing execute() method
+        logger.info("📋 Step 2b: Starting PM → Task Manager → Scrum Master cycle")
+        current_input = analysis_xml
+        iteration = 0
+        final_pm_output = None
+        final_task_output = None
+
+        while iteration < self.max_iterations:
+            iteration += 1
+            logger.info(f"\n--- Iteration {iteration} ---")
+
+            # Product Manager processes
+            logger.info("📋 Product Manager: Creating/updating requirements")
+            pm_output = self.product_manager.process(current_input)
+            final_pm_output = pm_output
+
+            # Task Manager breaks down requirements
+            logger.info("🔧 Task Manager: Breaking down into tasks")
+            task_output = self.task_manager.process(pm_output)
+            final_task_output = task_output
+
+            # Scrum Master reviews
+            logger.info("✅ Scrum Master: Reviewing for approval")
+            approval_output = self.scrum_master.process(task_output)
+
+            # Check approval
+            approval_tree = etree.fromstring(approval_output.encode())
+            approved = approval_tree.find('.//Decision').get('approved') == 'true'
+            feedback_text = approval_tree.find('Feedback').text
+
+            if approved:
+                logger.info(f"\n🎉 PROJECT APPROVED after {iteration} iteration(s)!")
+                complete_result = self._create_complete_result(
+                    analysis_xml, final_pm_output, final_task_output, approval_output, iteration, 'APPROVED'
+                )
+                return {
+                    'success': True,
+                    'iterations': iteration,
+                    'final_output': complete_result,
+                    'status': 'APPROVED'
+                }
+
+            logger.info(f"❌ Project rejected: {feedback_text}")
+
+            if iteration >= self.max_iterations:
+                logger.info(f"\n💔 PROJECT REJECTED after {self.max_iterations} iterations")
+                complete_result = self._create_complete_result(
+                    analysis_xml, final_pm_output, final_task_output, approval_output, iteration, 'REJECTED'
+                )
+                return {
+                    'success': False,
+                    'iterations': iteration,
+                    'final_output': complete_result,
+                    'status': 'REJECTED - Max iterations reached'
+                }
+
+            # Prepare feedback for Product Manager
+            logger.info(f"🔄 Sending feedback to Product Manager for iteration {iteration + 1}")
+            current_input = self._create_feedback_xml(feedback_text, analysis_xml)
+
+        return {'success': False, 'status': 'Unexpected end'}
+
     def _escape_xml_content(self, content: str) -> str:
         """Properly escape XML special characters"""
         if not content:
