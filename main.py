@@ -515,9 +515,18 @@ class POScrumMasterXAgent(BaseXAgent):
 
 
 class XAgentPipeline:
-    """Pipeline with PM ↔ Scrum Master feedback loop"""
+    """Pipeline with Document Formatter → PM ↔ Scrum Master feedback loop"""
 
     def __init__(self):
+        # Import document formatter to avoid startup issues
+        try:
+            from document_formatter_agent import DocumentFormatterXAgent
+            self.document_formatter = DocumentFormatterXAgent()
+            print("✅ Document Formatter integrated into pipeline")
+        except ImportError as e:
+            print(f"⚠️  Document Formatter not available: {e}")
+            self.document_formatter = None
+            
         self.analyst = AnalystXAgent()
         self.product_manager = ProductManagerXAgent()
         self.task_manager = TaskManagerXAgent()
@@ -560,13 +569,26 @@ class XAgentPipeline:
                         print(f"  Ampersand at position {pos}: '{context}'")
 
     def execute(self, document_content: str) -> dict:
-        """Execute pipeline with PM-Scrum Master feedback loop"""
+        """Execute pipeline with Document Formatter → PM-Scrum Master feedback loop"""
+
+        # Step 0: Document Formatting (runs once - optional but recommended)
+        formatted_content = document_content
+        if self.document_formatter:
+            logger.info("📝 Step 0: Document Formatting and Standardization")
+            try:
+                format_result = self.document_formatter.format_document(document_content)
+                formatted_content = format_result['formatted_content']
+                logger.info(f"✅ Document formatted for domain: {format_result['identified_domain']}")
+                logger.info(f"📊 Validation score: {format_result['validation_score']:.1f}%")
+            except Exception as e:
+                logger.warning(f"⚠️  Document formatting failed, using original: {e}")
+                formatted_content = document_content
 
         logger.info("🔍 Step 1: Document Analysis (runs once)")
         # Step 1: Analyst runs once - use CDATA for safe content handling
         document_xml = f"""<?xml version='1.0' encoding='UTF-8'?>
 <Document>
-    <text><![CDATA[{document_content}]]></text>
+    <text><![CDATA[{formatted_content}]]></text>
 </Document>"""
 
         # Debug the XML content before parsing
