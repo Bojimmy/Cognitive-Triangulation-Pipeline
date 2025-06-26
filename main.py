@@ -734,9 +734,27 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
 # Initialize pipeline with plugin system
-pipeline = XAgentPipeline()
-print("🔌 Domain Plugin System Initialized")
-print(f"📦 Available domains: {pipeline.product_manager.domain_registry.list_domains()}")
+try:
+    print("🔄 Initializing X-Agent Pipeline...")
+    pipeline = XAgentPipeline()
+    print("🔌 Domain Plugin System Initialized")
+    
+    # Check domain registry
+    try:
+        domains = pipeline.product_manager.domain_registry.list_domains()
+        print(f"📦 Available domains: {domains}")
+        if not domains:
+            print("⚠️  Warning: No domain plugins loaded")
+    except Exception as e:
+        print(f"⚠️  Warning: Domain registry issue: {e}")
+        print("🔄 Continuing with basic functionality...")
+        
+except Exception as e:
+    print(f"❌ Failed to initialize pipeline: {e}")
+    import traceback
+    traceback.print_exc()
+    # Create a minimal pipeline for basic functionality
+    pipeline = None
 
 def _convert_xml_to_natural_language(xml_output: str, status: str) -> str:
     """Convert XML pipeline output to natural language"""
@@ -1142,6 +1160,9 @@ def health_check():
     return jsonify({"status": "healthy", "service": "X-Agents Backend with Feedback Loop"}), 200
 
 if __name__ == "__main__":
+    import sys
+    import traceback
+    
     try:
         print("🚀 Starting X-Agent Backend Server with Feedback Loop...")
         print("📡 API available at http://0.0.0.0:5000")
@@ -1173,8 +1194,22 @@ if __name__ == "__main__":
             subprocess.check_call(['pip', 'install', 'flask', 'flask-cors', 'lxml', 'requests'])
             print("✅ Dependencies installed")
 
+        # Check if port is available
+        print("\n🔍 Checking port availability...")
+        import socket
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            result = s.connect_ex(('127.0.0.1', 5000))
+            if result == 0:
+                print("⚠️  Port 5000 is already in use, but continuing...")
+            else:
+                print("✅ Port 5000 is available")
+
         print(f"\n✅ Flask server starting on 0.0.0.0:5000...")
         print("🔧 Binding to 0.0.0.0:5000 for Replit compatibility...")
+        
+        # Force flush output for parallel mode
+        sys.stdout.flush()
+        sys.stderr.flush()
 
         # Start Flask server with explicit settings for Replit
         app.run(
