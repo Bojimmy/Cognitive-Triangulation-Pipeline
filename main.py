@@ -1154,6 +1154,44 @@ def list_available_domains():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/')
+def index():
+    """Root route - eliminates 404 errors"""
+    try:
+        # Check if pipeline is initialized
+        pipeline_status = "initialized" if pipeline else "not initialized"
+        
+        # Get plugin count if available
+        plugin_count = 0
+        if pipeline and hasattr(pipeline, 'product_manager'):
+            try:
+                domains = pipeline.product_manager.domain_registry.list_domains()
+                plugin_count = len(domains)
+            except:
+                plugin_count = 0
+        
+        return jsonify({
+            "service": "X-Agents Backend API",
+            "status": "running",
+            "pipeline_status": pipeline_status,
+            "available_plugins": plugin_count,
+            "frontend_url": "http://localhost:5173",
+            "api_endpoints": {
+                "process_documents": "POST /api/process",
+                "format_documents": "POST /api/format-document", 
+                "chat": "POST /api/chat",
+                "status": "GET /api/status",
+                "health": "GET /health"
+            },
+            "message": "X-Agents Backend is running successfully!"
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "service": "X-Agents Backend API", 
+            "status": "running_with_errors",
+            "error": str(e)
+        }), 200
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
@@ -1212,6 +1250,19 @@ if __name__ == "__main__":
         print(f"\n✅ Flask server starting on 0.0.0.0:5000...")
         print("🔧 Binding to 0.0.0.0:5000 for Replit compatibility...")
         
+        # Add signal handling and process monitoring
+        import signal
+        import os
+        
+        def signal_handler(sig, frame):
+            print(f'\n🛑 Received signal {sig}, shutting down gracefully...')
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        
+        print(f"🔍 DEBUG: Flask process PID: {os.getpid()}")
+        
         # Force flush output for parallel mode
         sys.stdout.flush()
         sys.stderr.flush()
@@ -1219,15 +1270,22 @@ if __name__ == "__main__":
         print("🔍 DEBUG: About to start Flask server...")
         sys.stdout.flush()
         
-        # Start Flask server with explicit settings for Replit
-        app.run(
-            host='0.0.0.0', 
-            port=5000, 
-            debug=False, 
-            threaded=True, 
-            use_reloader=False,
-            use_debugger=False
-        )
+        # Enhanced Flask startup with better error handling
+        try:
+            app.run(
+                host='0.0.0.0', 
+                port=5000, 
+                debug=False, 
+                threaded=True, 
+                use_reloader=False,
+                use_debugger=False
+            )
+        except Exception as e:
+            print(f"❌ FLASK STARTUP ERROR: {e}")
+            print("🔍 This is why your Full Stack workflow isn't working!")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
 
     except OSError as e:
         if "Address already in use" in str(e):
