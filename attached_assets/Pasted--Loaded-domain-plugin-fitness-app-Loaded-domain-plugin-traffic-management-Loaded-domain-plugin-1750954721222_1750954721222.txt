@@ -1,0 +1,46 @@
+ Loaded domain plugin: fitness_app
+✅ Loaded domain plugin: traffic_management
+✅ Loaded domain plugin: healthcare
+✅ Loaded domain plugin: mobile_app
+✅ Loaded domain plugin: ecommerce
+✅ Loaded domain plugin: fintech
+✅ Loaded domain plugin: visual_workflow
+✅ Loaded domain plugin: enterprise
+✅ Loaded domain plugin: real_estate
+✅ Loaded domain plugin: customer_support
+✅ Loaded domain plugin: staging_furniture
+🔌 Domain Plugin System Initialized
+📦 Available domains: ['customer_support', 'fitness_app', 'traffic_management', 'real_estate', 'healthcare', 'mobile_app', 'ecommerce', 'fintech', 'visual_workflow', 'enterprise', 'staging_furniture']
+🚀 Starting X-Agent Backend Server with Feedback Loop...
+📡 API available at http://0.0.0.0:5000
+🔗 Endpoints:
+   POST /api/process - Process documents with feedback loop
+   POST /api/chat    - LLM-powered requirements chat
+   GET  /api/status  - Get pipeline status
+   GET  /health     - Health check
+
+🔄 Feedback Loop Features:
+   • Analyst → PM → Task Manager → Scrum Master
+   • PM ↔ Scrum Master feedback loop (max 3 iterations)
+   • Automatic scope reduction and quality improvement
+
+🔧 Checking dependencies...
+✅ Flask available
+✅ Flask-CORS available
+✅ lxml available
+✅ requests available
+
+✅ Flask server starting on 0.0.0.0:5000...
+🔧 Binding to 0.0.0.0:5000 for Replit compatibility...
+ * Tip: There are .env or .flaskenv files present. Do "pip install python-dotenv" to use them.
+ * Serving Flask app 'main'
+ * Debug mode: off
+INFO:werkzeug:WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.128.7:5000
+INFO:werkzeug:Press CTRL+C to quit
+INFO:werkzeug:172.31.128.7 - - [26/Jun/2025 16:18:11] "GET / HTTP/1.1" 404 -
+INFO:werkzeug:172.31.128.7 - - [26/Jun/2025 16:18:11] "GET / HTTP/1.1" 404 -
+INFO:werkzeug:172.31.128.7 - - [26/Jun/2025 16:18:11] "GET / HTTP/1.1" 404 -
+INFO:werkzeug:172.31.128.7 - - [26/Jun/2025 16:18:11] "GET / HTTP/1.1" 404 -
