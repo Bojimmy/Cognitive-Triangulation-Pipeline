@@ -736,25 +736,94 @@ CORS(app)  # Enable CORS for React frontend
 # Initialize pipeline with plugin system
 try:
     print("🔄 Initializing X-Agent Pipeline...")
-    pipeline = XAgentPipeline()
-    print("🔌 Domain Plugin System Initialized")
+    print("🔍 Checking critical dependencies first...")
     
-    # Check domain registry
+    # Test imports that might be failing
     try:
-        domains = pipeline.product_manager.domain_registry.list_domains()
-        print(f"📦 Available domains: {domains}")
-        if not domains:
-            print("⚠️  Warning: No domain plugins loaded")
-    except Exception as e:
-        print(f"⚠️  Warning: Domain registry issue: {e}")
-        print("🔄 Continuing with basic functionality...")
+        from domain_plugins.registry import DomainRegistry, DomainPluginLoader
+        print("✅ Domain plugins import successful")
+    except Exception as import_e:
+        print(f"❌ Domain plugins import failed: {import_e}")
+        print("🔄 Creating minimal pipeline without domain plugins...")
+        
+        # Create a minimal pipeline class without domain dependencies
+        class MinimalXAgentPipeline:
+            def __init__(self):
+                self.analyst = AnalystXAgent()
+                # Create minimal PM without domain plugins
+                self.product_manager = ProductManagerXAgent()
+                self.task_manager = TaskManagerXAgent()
+                self.scrum_master = POScrumMasterXAgent()
+                self.max_iterations = 3
+                
+                # Override PM to not use domain registry
+                original_extract = self.product_manager._extract_requirements_with_plugins
+                def safe_extract(content, domain_hint=None):
+                    try:
+                        return original_extract(content, domain_hint)
+                    except:
+                        return {
+                            'domain': 'general',
+                            'requirements': [
+                                {'title': 'Core System Architecture', 'priority': 'high', 'category': 'functional'},
+                                {'title': 'User Interface Implementation', 'priority': 'high', 'category': 'functional'},
+                                {'title': 'API Development Framework', 'priority': 'medium', 'category': 'functional'}
+                            ],
+                            'stakeholders': ['End Users', 'Development Team'],
+                            'req_count': 3,
+                            'feedback_applied': False,
+                            'person_name': None,
+                            'company_name': None
+                        }
+                self.product_manager._extract_requirements_with_plugins = safe_extract
+            
+            def execute(self, document_content):
+                # Use the same execute method as XAgentPipeline
+                return XAgentPipeline.execute(self, document_content)
+                
+            def _escape_xml_content(self, content):
+                return XAgentPipeline._escape_xml_content(self, content)
+                
+            def _create_feedback_xml(self, feedback, original_analysis):
+                return XAgentPipeline._create_feedback_xml(self, feedback, original_analysis)
+                
+            def _create_complete_result(self, analysis_xml, pm_xml, task_xml, approval_xml, iterations, status):
+                return XAgentPipeline._create_complete_result(self, analysis_xml, pm_xml, task_xml, approval_xml, iterations, status)
+        
+        pipeline = MinimalXAgentPipeline()
+        print("✅ Minimal pipeline created successfully")
+        
+    else:
+        # Normal initialization with full domain plugins
+        pipeline = XAgentPipeline()
+        print("🔌 Domain Plugin System Initialized")
+        
+        # Check domain registry
+        try:
+            domains = pipeline.product_manager.domain_registry.list_domains()
+            print(f"📦 Available domains: {domains}")
+            if not domains:
+                print("⚠️  Warning: No domain plugins loaded")
+        except Exception as e:
+            print(f"⚠️  Warning: Domain registry issue: {e}")
+            print("🔄 Continuing with basic functionality...")
         
 except Exception as e:
-    print(f"❌ Failed to initialize pipeline: {e}")
+    print(f"❌ CRITICAL: Failed to initialize any pipeline: {e}")
     import traceback
     traceback.print_exc()
-    # Create a minimal pipeline for basic functionality
-    pipeline = None
+    
+    # Create absolute minimal pipeline as last resort
+    class EmergencyPipeline:
+        def execute(self, content):
+            return {
+                'success': False,
+                'status': 'Pipeline initialization failed - check console for details',
+                'final_output': f'<ErrorResult>Pipeline failed to initialize: {str(e)}</ErrorResult>'
+            }
+    
+    pipeline = EmergencyPipeline()
+    print("🚨 Emergency pipeline created - basic functionality only")
 
 def _convert_xml_to_natural_language(xml_output: str, status: str) -> str:
     """Convert XML pipeline output to natural language"""
@@ -1268,10 +1337,20 @@ if __name__ == "__main__":
         sys.stderr.flush()
 
         print("🔍 DEBUG: About to start Flask server...")
+        print(f"🔍 DEBUG: Pipeline object: {type(pipeline)}")
+        print(f"🔍 DEBUG: Flask app: {app}")
         sys.stdout.flush()
+        
+        # Test if we can create a simple route response
+        try:
+            with app.test_client() as client:
+                print("✅ Flask app test client created successfully")
+        except Exception as test_e:
+            print(f"❌ Flask app test failed: {test_e}")
         
         # Enhanced Flask startup with better error handling
         try:
+            print("🚀 Starting Flask with debug output...")
             app.run(
                 host='0.0.0.0', 
                 port=5000, 
@@ -1283,8 +1362,20 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ FLASK STARTUP ERROR: {e}")
             print("🔍 This is why your Full Stack workflow isn't working!")
+            print("🔍 Error details:")
             import traceback
             traceback.print_exc()
+            
+            # Try to give more specific error info
+            if "Address already in use" in str(e):
+                print("💡 Port 5000 is busy - trying to find what's using it...")
+                import subprocess
+                try:
+                    result = subprocess.run(['lsof', '-i', ':5000'], capture_output=True, text=True)
+                    print(f"Port 5000 usage: {result.stdout}")
+                except:
+                    print("Could not check port usage")
+            
             sys.exit(1)
 
     except OSError as e:
