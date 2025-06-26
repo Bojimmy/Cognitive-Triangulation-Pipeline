@@ -481,31 +481,9 @@ function App() {
       {/* Column 1: Node Palette */}
       <NodePalette />
 
-      {/* Column 2: The Main Canvas (takes up the most space) */}
-      <div className="flex-1 relative min-w-0 h-screen overflow-hidden">
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          {selectedNodes.length > 0 && (
-            <button
-              onClick={deleteSelectedNodes}
-              className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded shadow"
-            >
-              Delete Selected ({selectedNodes.length})
-            </button>
-          )}
-        </div>
-
-        <div 
-          ref={reactFlowWrapper}
-          style={{ 
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: '100%', 
-            height: '100%'
-          }}
-        >
+      {/* Column 2: Visual Workflow Display */}
+      <div className="flex-1 border-r border-slate-200 bg-gray-50 relative">
+        <div className="h-full w-full" style={{ height: '100vh', width: '100%' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}

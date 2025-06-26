@@ -11,8 +11,11 @@ export default function DocumentFormatter({ onFormatComplete }) {
     if (!content.trim()) return;
 
     setIsFormatting(true);
+    setResult(null); // Clear previous results
+    
     try {
-      const response = await fetch('/api/format-document', {
+      console.log('Attempting to connect to backend...');
+      const response = await fetch('http://localhost:5000/api/format-document', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -23,7 +26,14 @@ export default function DocumentFormatter({ onFormatComplete }) {
         })
       });
 
+      console.log('Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      console.log('Response data:', data);
       
       if (data.success) {
         setResult(data);
@@ -32,9 +42,13 @@ export default function DocumentFormatter({ onFormatComplete }) {
         }
       } else {
         console.error('Formatting failed:', data.error);
+        setResult({ error: data.error });
       }
     } catch (error) {
       console.error('Network error:', error);
+      setResult({ 
+        error: `Connection failed: ${error.message}. Make sure the Flask backend is running on port 5000.` 
+      });
     } finally {
       setIsFormatting(false);
     }
@@ -89,14 +103,21 @@ export default function DocumentFormatter({ onFormatComplete }) {
 
       {result && (
         <div className="mt-6 space-y-4">
-          <div className="p-4 bg-green-50 rounded-md">
-            <h3 className="font-semibold text-green-800 mb-2">Formatting Complete!</h3>
-            <p className="text-green-700">
-              Validation Score: {result.validation_score}% | 
-              Domain: {result.domain || 'Auto-detected'} | 
-              Requirements: {result.requirements?.length || 0}
-            </p>
-          </div>
+          {result.error ? (
+            <div className="p-4 bg-red-50 rounded-md">
+              <h3 className="font-semibold text-red-800 mb-2">Formatting Error</h3>
+              <p className="text-red-700">{result.error}</p>
+            </div>
+          ) : (
+            <div className="p-4 bg-green-50 rounded-md">
+              <h3 className="font-semibold text-green-800 mb-2">Formatting Complete!</h3>
+              <p className="text-green-700">
+                Validation Score: {result.validation_score}% | 
+                Domain: {result.domain || 'Auto-detected'} | 
+                Requirements: {result.requirements?.length || 0}
+              </p>
+            </div>
+          )}
 
           <div className="p-4 bg-gray-50 rounded-md">
             <h4 className="font-medium text-gray-800 mb-2">Formatted Content:</h4>
