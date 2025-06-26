@@ -16,6 +16,128 @@ import re
 import os
 import requests
 
+class LazyDomainRegistry:
+    """Registry that scans plugins but loads them on-demand for scalability"""
+    
+    def __init__(self, plugins_dir="domain_plugins"):
+        self.plugins_dir = plugins_dir
+        self.available_domains = {}  # Plugin metadata only
+        self.loaded_plugins = {}     # Actually loaded plugins
+        self._scan_available_plugins()
+    
+    def _scan_available_plugins(self):
+        """Scan folder structure without loading plugins"""
+        import os
+        import importlib.util
+        
+        if not os.path.exists(self.plugins_dir):
+            print(f"⚠️  Plugin directory {self.plugins_dir} not found")
+            return
+            
+        plugin_files = [f for f in os.listdir(self.plugins_dir) 
+                       if f.endswith('.py') and not f.startswith('__')]
+        
+        print(f"🔍 Scanning {len(plugin_files)} available plugins...")
+        
+        for plugin_file in plugin_files:
+            domain_name = plugin_file[:-3]  # Remove .py
+            plugin_path = os.path.join(self.plugins_dir, plugin_file)
+            
+            # Store metadata without loading
+            self.available_domains[domain_name] = {
+                'file_path': plugin_path,
+                'loaded': False,
+                'domain_name': domain_name
+            }
+        
+        print(f"📦 Found {len(self.available_domains)} available domains: {list(self.available_domains.keys())}")
+        print(f"🚀 Plugins will load on-demand when needed")
+    
+    def list_domains(self):
+        """List all available domains (loaded + unloaded)"""
+        return list(self.available_domains.keys())
+    
+    def get_handler(self, domain_name):
+        """Load plugin on-demand and return handler"""
+        if domain_name not in self.available_domains:
+            print(f"❌ Domain '{domain_name}' not found in available plugins")
+            return None
+            
+        # Check if already loaded
+        if domain_name in self.loaded_plugins:
+            return self.loaded_plugins[domain_name]
+        
+        # Load plugin on-demand
+        try:
+            plugin_info = self.available_domains[domain_name]
+            handler = self._load_plugin_now(domain_name, plugin_info['file_path'])
+            
+            if handler:
+                self.loaded_plugins[domain_name] = handler
+                self.available_domains[domain_name]['loaded'] = True
+                print(f"✅ Loaded domain plugin on-demand: {domain_name}")
+                return handler
+            
+        except Exception as e:
+            print(f"❌ Failed to load domain plugin {domain_name}: {e}")
+            return None
+    
+    def _load_plugin_now(self, domain_name, file_path):
+        """Actually load a specific plugin"""
+        import importlib.util
+        
+        spec = importlib.util.spec_from_file_location(domain_name, file_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        
+        # Look for handler class (adjust based on your plugin structure)
+        handler_class_name = f"{domain_name.title().replace('_', '')}Handler"
+        if hasattr(module, handler_class_name):
+            return getattr(module, handler_class_name)()
+        else:
+            print(f"⚠️  Handler class {handler_class_name} not found in {domain_name}")
+            return None
+    
+    def detect_domain(self, content):
+        """Detect domain using lightweight keyword matching"""
+        content_lower = content.lower()
+        
+        # Quick keyword-based detection (no plugin loading needed)
+        domain_keywords = {
+            'customer_support': ['support', 'ticket', 'helpdesk', 'customer service'],
+            'fitness_app': ['fitness', 'workout', 'exercise', 'gym', 'health'],
+            'ecommerce': ['shop', 'cart', 'product', 'order', 'payment'],
+            'fintech': ['finance', 'banking', 'payment', 'transaction', 'money'],
+            'healthcare': ['medical', 'patient', 'doctor', 'health', 'clinic'],
+            'real_estate': ['property', 'real estate', 'listing', 'mls', 'rent'],
+            'mobile_app': ['mobile', 'app', 'ios', 'android', 'smartphone'],
+            'enterprise': ['enterprise', 'corporate', 'business', 'scalability'],
+            'visual_workflow': ['workflow', 'drag', 'drop', 'visual', 'canvas'],
+            'traffic_management': ['traffic', 'transportation', 'routing', 'logistics'],
+            'staging_furniture': ['furniture', 'staging', 'interior', 'decor']
+        }
+        
+        best_match = 'general'
+        best_score = 0
+        
+        for domain, keywords in domain_keywords.items():
+            if domain in self.available_domains:
+                score = sum(1 for keyword in keywords if keyword in content_lower)
+                if score > best_score:
+                    best_match = domain
+                    best_score = score
+        
+        confidence = min(best_score / 3.0, 1.0)  # Normalize to 0-1
+        return best_match, confidence
+    
+    def get_loaded_count(self):
+        """Get count of actually loaded plugins"""
+        return len(self.loaded_plugins)
+    
+    def get_available_count(self):
+        """Get count of available plugins"""
+        return len(self.available_domains)
+
 # Import lxml with error handling
 try:
     from lxml import etree
@@ -121,11 +243,9 @@ class ProductManagerXAgent(BaseXAgent):
 
     def __init__(self):
         super().__init__("ProductManagerXAgent")
-        # Initialize domain plugin system
-        from domain_plugins.registry import DomainRegistry, DomainPluginLoader
-        self.domain_registry = DomainRegistry()
-        self.plugin_loader = DomainPluginLoader()
-        self.plugin_loader.load_plugins(self.domain_registry)
+        # Use lazy loading registry - no more eager plugin loading!
+        self.domain_registry = LazyDomainRegistry()
+        print("🔌 Lazy Domain Registry initialized")
 
     def _process_intelligence(self, parsed_input: etree.Element) -> dict:
         """Extract requirements using domain plugins"""
@@ -917,19 +1037,16 @@ try:
         print("✅ Minimal pipeline created successfully")
         
     else:
-        # Normal initialization with full domain plugins
+        # Normal initialization with lazy plugin loading
         pipeline = XAgentPipeline()
-        print("🔌 Domain Plugin System Initialized")
         
-        # Check domain registry
-        try:
-            domains = pipeline.product_manager.domain_registry.list_domains()
-            print(f"📦 Available domains: {domains}")
-            if not domains:
-                print("⚠️  Warning: No domain plugins loaded")
-        except Exception as e:
-            print(f"⚠️  Warning: Domain registry issue: {e}")
-            print("🔄 Continuing with basic functionality...")
+        # Quick scan without loading plugins
+        available_count = pipeline.product_manager.domain_registry.get_available_count()
+        loaded_count = pipeline.product_manager.domain_registry.get_loaded_count()
+        
+        print(f"🔌 Domain Plugin System Initialized (Lazy Loading)")
+        print(f"📦 Available domains: {available_count} (loaded: {loaded_count})")
+        print(f"🚀 Startup complete - plugins load on-demand!")
         
 except Exception as e:
     print(f"❌ CRITICAL: Failed to initialize any pipeline: {e}")
