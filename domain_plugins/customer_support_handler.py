@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """
 Customer Support Domain Handler
@@ -11,16 +10,16 @@ from typing import Dict, List, Any
 
 class CustomerSupportDomainHandler(BaseDomainHandler):
     """Customer Support domain handler"""
-    
+
     def get_domain_name(self) -> str:
         return 'customer_support'
-    
+
     def get_detection_keywords(self) -> List[str]:
         return ['support', 'ticket', 'helpdesk', 'customer service', 'agent', 'escalation', 'call center']
-    
+
     def get_priority_score(self) -> int:
-        return 3  # High specificity
-    
+        return 1  # Low priority - most generic
+
     def extract_requirements(self, content: str, context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         requirements = []
         content_lower = content.lower()
@@ -104,10 +103,10 @@ class CustomerSupportDomainHandler(BaseDomainHandler):
     def extract_stakeholders(self, content: str) -> List[str]:
         stakeholders = ['Support Agents', 'Customers', 'Management']
         content_lower = content.lower()
-        
+
         if 'enterprise' in content_lower or 'business' in content_lower:
             stakeholders.append('Business Stakeholders')
         if 'developer' in content_lower:
             stakeholders.append('Development Team')
-        
+
         return stakeholders

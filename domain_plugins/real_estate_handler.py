@@ -19,29 +19,47 @@ class RealEstateDomainHandler(BaseDomainHandler):
             'property', 'real estate', 'mls', 'tenant', 'lease', 'rent', 'listing',
             'property management', 'rental', 'landlord', 'maintenance', 'vacancy',
             'apartment', 'commercial', 'residential', 'portfolio', 'unit',
-            'application', 'screening', 'deposit', 'eviction', 'inspection'
+            'application', 'screening', 'deposit', 'eviction', 'inspection',
+            'property listing', 'tenant management', 'rent collection', 'property managers',
+            'real estate agents', 'market data', 'lease management'
         ]
     
     def get_priority_score(self) -> int:
-        return 4  # High priority - very specific domain
+        return 5  # Highest priority - very specific domain
     
     def extract_requirements(self, content: str, context: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         requirements = []
         content_lower = content.lower()
         
-        # Property Listing Management
-        if any(term in content_lower for term in ['listing', 'property', 'mls', 'catalog']):
+        # MLS Integration System (specific detection)
+        if any(term in content_lower for term in ['mls integration', 'mls', 'listing synchronization', 'market data']):
             requirements.append({
-                'title': 'Property Listing Management System with MLS Integration',
+                'title': 'MLS Integration System with Property Listing Synchronization',
                 'priority': 'high',
                 'category': 'functional'
             })
         
-        # Tenant Management
-        if any(term in content_lower for term in ['tenant', 'resident', 'renter', 'lease']):
+        # Property Listing Management
+        if any(term in content_lower for term in ['property listing', 'listing', 'property catalog']):
             requirements.append({
-                'title': 'Comprehensive Tenant Management and Lease Tracking System',
+                'title': 'Property Listing Management System',
                 'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Tenant Management Portal (specific detection)
+        if any(term in content_lower for term in ['tenant management', 'tenant portal', 'lease management', 'rent collection']):
+            requirements.append({
+                'title': 'Tenant Management Portal with Lease and Rent Collection',
+                'priority': 'high',
+                'category': 'functional'
+            })
+        
+        # Maintenance Request Tracking
+        if any(term in content_lower for term in ['maintenance request', 'maintenance tracking', 'work order']):
+            requirements.append({
+                'title': 'Maintenance Request Management and Tracking System',
+                'priority': 'medium',
                 'category': 'functional'
             })
         
