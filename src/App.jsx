@@ -14,6 +14,8 @@ import 'reactflow/dist/style.css';
 import './App.css';
 import InputPanel from './InputPanel';
 import ResultsPanel from './ResultsPanel';
+import DocumentFormatter from './DocumentFormatter';
+import PluginCreator from './PluginCreator';
 
 // Custom Node Components
 const AnalystNode = ({ data, selected }) => (
@@ -347,7 +349,7 @@ const generateInitialXml = (inputText) => {
   return `<input><text>${escapedInputText}</text></input>`;
 };
 
-export default function App() {
+function App() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedNodes, setSelectedNodes] = useState([]);
@@ -467,6 +469,12 @@ export default function App() {
     setSelectedNodes(elements.nodes || []);
   }, []);
 
+  const tabs = [
+    { id: 'pipeline', label: '🤖 X-Agent Pipeline', description: 'Process requirements' },
+    { id: 'formatter', label: '📝 Document Formatter', description: 'Format & standardize' },
+    { id: 'creator', label: '🔧 Plugin Creator', description: 'Create domain plugins' }
+  ];
+
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
 
@@ -519,9 +527,47 @@ export default function App() {
 
       {/* Column 3: Input and Results Panels */}
       <div className="w-96 flex flex-col border-l border-slate-200 relative z-20 bg-white">
-        <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} finalOutput={finalOutput} resultData={resultData} />
-        <ResultsPanel resultData={resultData} isLoading={isLoading} />
+        {/* Tab Navigation */}
+        <div className="flex justify-center mt-4">
+          <div className="bg-white rounded-lg p-1 shadow-md">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'pipeline' && (
+          <>
+            <InputPanel onRunPipeline={handleRunPipeline} isLoading={isLoading} finalOutput={finalOutput} resultData={resultData} />
+            <ResultsPanel resultData={resultData} isLoading={isLoading} />
+          </>
+        )}
+
+        {activeTab === 'formatter' && (
+          <DocumentFormatter 
+            onFormatComplete={(formattedContent) => {
+              setResultData(formattedContent);
+              setActiveTab('process');
+            }}
+          />
+        )}
+
+        {activeTab === 'creator' && (
+          <PluginCreator />
+        )}
       </div>
     </div>
   );
 }
+export default App;

@@ -1038,6 +1038,104 @@ Keep responses concise and focused on requirements gathering. Always format requ
             "response": "I encountered an error. Please try again or format your requirements as REQ-001: Description, REQ-002: Description, etc."
         }), 200
 
+@app.route('/api/format-document', methods=['POST'])
+def format_document():
+    """Format document with system standards and keywords"""
+    try:
+        data = request.get_json()
+        raw_content = data.get('content', '')
+        target_domain = data.get('domain', None)
+        
+        if not raw_content:
+            return jsonify({"error": "No content provided"}), 400
+        
+        # Initialize document formatter
+        from document_formatter_agent import DocumentFormatterXAgent
+        formatter = DocumentFormatterXAgent()
+        
+        # Format document
+        result = formatter.format_document(raw_content, target_domain)
+        
+        return jsonify({
+            "success": True,
+            "formatted_content": result['formatted_content'],
+            "requirements": result['extracted_requirements'],
+            "domain": result['identified_domain'],
+            "stakeholders": result['stakeholders'],
+            "validation_score": result['validation_score']
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Document formatting error: {e}")
+        return jsonify({"error": f"Formatting failed: {str(e)}"}), 500
+
+@app.route('/api/create-plugin', methods=['POST'])
+def create_domain_plugin():
+    """Create new domain plugin (backend only)"""
+    try:
+        data = request.get_json()
+        
+        # Initialize plugin creator
+        from domain_plugin_creator_agent import DomainPluginCreatorXAgent
+        creator = DomainPluginCreatorXAgent()
+        
+        # Check if this is content analysis or plugin creation
+        if 'content' in data:
+            # Analyze content for plugin suggestions
+            result = creator.analyze_content_for_plugin(data['content'])
+            return jsonify({
+                "success": True,
+                "type": "analysis",
+                "analysis": result['analysis'],
+                "suggested_plugin": result['suggested_plugin'],
+                "confidence": result['confidence']
+            }), 200
+        
+        elif 'plugin_spec' in data:
+            # Create actual plugin
+            result = creator.create_domain_plugin(data['plugin_spec'])
+            
+            if result['success']:
+                # Reload domain registry to include new plugin
+                pipeline.product_manager.domain_registry = DomainRegistry()
+                from domain_plugins.registry import DomainPluginLoader
+                loader = DomainPluginLoader()
+                loader.load_plugins(pipeline.product_manager.domain_registry)
+                
+                return jsonify({
+                    "success": True,
+                    "type": "creation",
+                    "domain_name": result['domain_name'],
+                    "file_path": result['file_path'],
+                    "registered": result['registered'],
+                    "quality_analysis": result['analysis']
+                }), 200
+            else:
+                return jsonify({
+                    "success": False,
+                    "error": result['error']
+                }), 400
+        
+        else:
+            return jsonify({"error": "Must provide either 'content' for analysis or 'plugin_spec' for creation"}), 400
+        
+    except Exception as e:
+        logger.error(f"Plugin creation error: {e}")
+        return jsonify({"error": f"Plugin creation failed: {str(e)}"}), 500
+
+@app.route('/api/list-domains', methods=['GET'])
+def list_available_domains():
+    """List all available domain plugins"""
+    try:
+        domains = pipeline.product_manager.domain_registry.list_domains()
+        return jsonify({
+            "success": True,
+            "domains": domains,
+            "total_count": len(domains)
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
