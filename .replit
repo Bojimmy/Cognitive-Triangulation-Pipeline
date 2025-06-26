@@ -48,7 +48,7 @@ localPort = 5177
 externalPort = 5173
 
 [workflows]
-runButton = "Full Stack Dev"
+runButton = "Full Stack Dashboard"
 
 [[workflows.workflow]]
 name = "Full Stack Dev"
@@ -80,3 +80,16 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python3 main.py"
+
+[[workflows.workflow]]
+name = "Full Stack Dashboard"
+author = 37546241
+mode = "parallel"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python3 -u -W ignore main.py"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev"
