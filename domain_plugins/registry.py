@@ -33,6 +33,9 @@ class DomainRegistry:
             from .fintech_handler import FintechDomainHandler
             from .visual_workflow_handler import VisualWorkflowDomainHandler
             from .enterprise_handler import EnterpriseDomainHandler
+            from .beekeeping_handler import BeekeepingDomainHandler
+            from .restaurant_management_handler import RestaurantManagementDomainHandler
+            from .gaming_studio_management_handler import GamingStudioManagementDomainHandler
             
             default_handlers = [
                 CustomerSupportDomainHandler(),
@@ -45,6 +48,9 @@ class DomainRegistry:
                 FintechDomainHandler(),
                 VisualWorkflowDomainHandler(),
                 EnterpriseDomainHandler(),
+                BeekeepingDomainHandler(),
+                RestaurantManagementDomainHandler(),
+                GamingStudioManagementDomainHandler(),
             ]
             
             for handler in default_handlers:

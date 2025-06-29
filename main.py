@@ -9,20 +9,34 @@ from flask_cors import CORS
 import hashlib
 import time
 import json
+import asyncio
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 import logging
 import re
 import os
 import requests
+import datetime
 
-class LazyDomainRegistry:
-    """Registry that scans plugins but loads them on-demand for scalability"""
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+def write_debug_log(message):
+    with open('main_internal_debug.log', 'a') as f:
+        f.write(f'{datetime.datetime.now()}: {message}\n')
+    print(f"[DEBUG_LOG] {datetime.datetime.now()}: {message}")
+
+class LazyDomainRegistryWithCreator:
+
+    """Enhanced registry that scans plugins, loads on-demand, and creates missing plugins"""
     
     def __init__(self, plugins_dir="domain_plugins"):
         self.plugins_dir = plugins_dir
         self.available_domains = {}  # Plugin metadata only
         self.loaded_plugins = {}     # Actually loaded plugins
+        self.plugin_creator = None   # Lazy load plugin creator too
+        self.custom_plugins_created = 0  # Track custom plugins for billing
         self._scan_available_plugins()
     
     def _scan_available_plugins(self):
@@ -47,7 +61,8 @@ class LazyDomainRegistry:
             self.available_domains[domain_name] = {
                 'file_path': plugin_path,
                 'loaded': False,
-                'domain_name': domain_name
+                'domain_name': domain_name,
+                'custom_created': False  # Track if custom created
             }
         
         print(f"📦 Found {len(self.available_domains)} available domains: {list(self.available_domains.keys())}")
@@ -57,14 +72,133 @@ class LazyDomainRegistry:
         """List all available domains (loaded + unloaded)"""
         return list(self.available_domains.keys())
     
+    def get_handler_or_create(self, content, domain_hint=None, allow_custom_creation=True):
+        """Main workflow: Find suitable plugin or create new one"""
+        
+        print(f"🔍 [DEBUG] get_handler_or_create called with domain_hint: '{domain_hint}'")
+        print(f"🔍 [DEBUG] Available domains: {list(self.available_domains.keys())}")
+        
+        # Step 1: If domain_hint is provided and exists, use it directly
+        if domain_hint and domain_hint != "general" and domain_hint in self.available_domains:
+            print(f"🎯 Using provided domain hint: {domain_hint}")
+            handler = self.get_handler(domain_hint)
+            if handler:
+                print(f"✅ Using existing plugin: {domain_hint}")
+                return handler, domain_hint, False, 0  # (handler, domain, newly_created, cost)
+        else:
+            if domain_hint:
+                print(f"❌ [DEBUG] Domain hint '{domain_hint}' not in available domains or is 'general'")
+        
+        # Step 2: Try to detect domain from available plugins (fallback)
+        detected_domain, confidence = self.detect_domain(content)
+        
+        print(f"🔍 Domain detection: {detected_domain} (confidence: {confidence:.2f})")
+        
+        # Step 3: If confidence is high enough, use existing plugin
+        if confidence >= 0.6:  # Good confidence threshold
+            handler = self.get_handler(detected_domain)
+            if handler:
+                print(f"✅ Using existing plugin: {detected_domain}")
+                return handler, detected_domain, False, 0  # (handler, domain, newly_created, cost)
+        
+        # Step 4: No suitable plugin found - create new one if allowed
+        if allow_custom_creation:
+            print(f"❌ No suitable plugin found (best: {detected_domain}, confidence: {confidence:.2f})")
+            print("🔧 Creating custom plugin...")
+            
+            return self._create_custom_plugin(content, domain_hint)
+        else:
+            # Return general handler or None if creation not allowed
+            return None, 'general', False, 0
+    
+    def _create_custom_plugin(self, content, domain_hint=None):
+        """Create new plugin using DomainPluginCreatorXAgent"""
+        try:
+            # Step 1: Lazy load plugin creator
+            if not self.plugin_creator:
+                from domain_plugin_creator_agent import DomainPluginCreatorXAgent
+                self.plugin_creator = DomainPluginCreatorXAgent()
+                print("🔧 Plugin Creator Agent loaded")
+            
+            # Step 2: Analyze content for plugin creation
+            print("📊 Analyzing content for custom plugin requirements...")
+            analysis_result = self.plugin_creator.analyze_content_for_plugin(content)
+            
+            if analysis_result['confidence'] < 0.7:
+                print(f"⚠️  Plugin creator confidence too low: {analysis_result['confidence']}")
+                print("🔄 Falling back to general domain processing")
+                return None, 'general', False, 0
+            
+            # Step 3: Estimate cost for custom plugin
+            estimated_cost = self._estimate_plugin_cost(content, analysis_result)
+            print(f"💰 Estimated cost for custom plugin: ${estimated_cost}")
+            
+            # Step 4: Create the plugin (in real implementation, this would require payment)
+            plugin_spec = analysis_result['suggested_plugin']
+            print(f"🛠️  Creating custom plugin: {plugin_spec.get('domain_name', 'unknown')}")
+            
+            # Use asyncio.run() to handle the async function call
+            creation_result = asyncio.run(self.plugin_creator.create_domain_plugin(plugin_spec))
+            
+            if creation_result['success']:
+                new_domain = creation_result['domain_name']
+                print(f"✅ Created new plugin: {new_domain}")
+                
+                # Step 5: Register new plugin in our system
+                plugin_path = creation_result['file_path']
+                self.available_domains[new_domain] = {
+                    'file_path': plugin_path,
+                    'loaded': False,
+                    'domain_name': new_domain,
+                    'custom_created': True,  # Mark as custom
+                    'creation_cost': estimated_cost,
+                    'created_timestamp': time.time()
+                }
+                
+                # Step 6: Load the new plugin immediately
+                handler = self.get_handler(new_domain)
+                if handler:
+                    self.custom_plugins_created += 1
+                    print(f"🎉 Custom plugin ready for use! Total custom plugins: {self.custom_plugins_created}")
+                    return handler, new_domain, True, estimated_cost  # (handler, domain, newly_created, cost)
+                
+            else:
+                print(f"❌ Plugin creation failed: {creation_result['error']}")
+                
+        except Exception as e:
+            print(f"❌ Plugin creation error: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        # Fallback to general processing
+        print("🔄 Falling back to general domain processing")
+        return None, 'general', False, 0
+    
+    def _estimate_plugin_cost(self, content, analysis_result):
+        """Estimate cost for creating custom plugin"""
+        base_cost = 50  # Base fee for plugin creation
+        
+        # Complexity factors
+        word_count = len(content.split())
+        complexity_score = analysis_result.get('complexity_score', 0.5)
+        
+        # Calculate additional costs
+        complexity_cost = (word_count // 100) * 10  # $10 per 100 words
+        specialty_cost = int(complexity_score * 25)  # Up to $25 for complexity
+        
+        total_cost = base_cost + complexity_cost + specialty_cost
+        return min(total_cost, 200)  # Cap at $200
+    
     def get_handler(self, domain_name):
-        """Load plugin on-demand and return handler"""
+        """Load plugin on-demand and return handler (existing method)"""
+        write_debug_log(f"[DEBUG] get_handler called for: {domain_name}")
         if domain_name not in self.available_domains:
-            print(f"❌ Domain '{domain_name}' not found in available plugins")
+            write_debug_log(f"[DEBUG] Domain '{domain_name}' not found in available plugins")
             return None
             
         # Check if already loaded
         if domain_name in self.loaded_plugins:
+            write_debug_log(f"[DEBUG] Domain '{domain_name}' already loaded.")
             return self.loaded_plugins[domain_name]
         
         # Load plugin on-demand
@@ -75,59 +209,60 @@ class LazyDomainRegistry:
             if handler:
                 self.loaded_plugins[domain_name] = handler
                 self.available_domains[domain_name]['loaded'] = True
-                print(f"✅ Loaded domain plugin on-demand: {domain_name}")
+                write_debug_log(f"[DEBUG] Loaded domain plugin on-demand: {domain_name}")
                 return handler
             
         except Exception as e:
-            print(f"❌ Failed to load domain plugin {domain_name}: {e}")
+            write_debug_log(f"[DEBUG] Failed to load domain plugin {domain_name}: {e}")
             return None
     
     def _load_plugin_now(self, domain_name, file_path):
-        """Actually load a specific plugin"""
+        """Actually load a specific plugin (existing method)"""
+        write_debug_log(f"[DEBUG] _load_plugin_now called for: {domain_name} at {file_path}")
         import importlib.util
         
         spec = importlib.util.spec_from_file_location(domain_name, file_path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         
-        # Look for handler class (adjust based on your plugin structure)
-        handler_class_name = f"{domain_name.title().replace('_', '')}Handler"
+        # Look for handler class
+        handler_class_name = f"{domain_name.title().replace('_', '')}DomainHandler"
+        write_debug_log(f"[DEBUG] Expected handler class name: {handler_class_name}")
         if hasattr(module, handler_class_name):
+            write_debug_log(f"[DEBUG] Found handler class: {handler_class_name}")
             return getattr(module, handler_class_name)()
         else:
-            print(f"⚠️  Handler class {handler_class_name} not found in {domain_name}")
+            write_debug_log(f"⚠️  Handler class {handler_class_name} not found in {domain_name}")
             return None
     
     def detect_domain(self, content):
-        """Detect domain using lightweight keyword matching"""
+        """Enhanced domain detection with existing plugins, dynamically loading keywords."""
         content_lower = content.lower()
-        
-        # Quick keyword-based detection (no plugin loading needed)
-        domain_keywords = {
-            'customer_support': ['support', 'ticket', 'helpdesk', 'customer service'],
-            'fitness_app': ['fitness', 'workout', 'exercise', 'gym', 'health'],
-            'ecommerce': ['shop', 'cart', 'product', 'order', 'payment'],
-            'fintech': ['finance', 'banking', 'payment', 'transaction', 'money'],
-            'healthcare': ['medical', 'patient', 'doctor', 'health', 'clinic'],
-            'real_estate': ['property', 'real estate', 'listing', 'mls', 'rent'],
-            'mobile_app': ['mobile', 'app', 'ios', 'android', 'smartphone'],
-            'enterprise': ['enterprise', 'corporate', 'business', 'scalability'],
-            'visual_workflow': ['workflow', 'drag', 'drop', 'visual', 'canvas'],
-            'traffic_management': ['traffic', 'transportation', 'routing', 'logistics'],
-            'staging_furniture': ['furniture', 'staging', 'interior', 'decor']
-        }
         
         best_match = 'general'
         best_score = 0
         
-        for domain, keywords in domain_keywords.items():
-            if domain in self.available_domains:
+        write_debug_log(f"[DEBUG] Starting domain detection for content: {content_lower[:50]}...")
+        write_debug_log(f"[DEBUG] Available domains: {list(self.available_domains.keys())}")
+
+        # Iterate through all available domains (loaded or not)
+        for domain_name in self.available_domains.keys():
+            write_debug_log(f"[DEBUG] Checking domain: {domain_name}")
+            handler = self.get_handler(domain_name) # This will load the plugin if not already loaded
+            if handler and hasattr(handler, 'get_detection_keywords'):
+                keywords = handler.get_detection_keywords()
                 score = sum(1 for keyword in keywords if keyword in content_lower)
+                write_debug_log(f"[DEBUG]   Keywords for {domain_name}: {keywords}")
+                write_debug_log(f"[DEBUG]   Score for {domain_name}: {score}")
                 if score > best_score:
-                    best_match = domain
+                    best_match = domain_name
                     best_score = score
+                    write_debug_log(f"[DEBUG]   New best match: {best_match} with score {best_score}")
         
-        confidence = min(best_score / 3.0, 1.0)  # Normalize to 0-1
+        # Simple normalization for confidence. Adjust as needed.
+        # Max score could be based on the highest number of keywords in any domain, or a fixed value.
+        confidence = min(best_score / 3.0, 1.0)  # Assuming 3 keywords give high confidence
+        write_debug_log(f"[DEBUG] Final detected domain: {best_match}, Confidence: {confidence:.2f}")
         return best_match, confidence
     
     def get_loaded_count(self):
@@ -137,6 +272,23 @@ class LazyDomainRegistry:
     def get_available_count(self):
         """Get count of available plugins"""
         return len(self.available_domains)
+    
+    def rescan_plugins(self):
+        """Rescan the plugin directory to pick up new plugins."""
+        self.available_domains = {}
+        self._scan_available_plugins()
+        print("🔄 Rescanned available plugins.")
+
+    def get_custom_plugin_stats(self):
+        """Get statistics about custom plugins"""
+        custom_plugins = [d for d in self.available_domains.values() if d.get('custom_created', False)]
+        total_cost = sum(d.get('creation_cost', 0) for d in custom_plugins)
+        
+        return {
+            'total_custom_plugins': len(custom_plugins),
+            'total_revenue': total_cost,
+            'loaded_custom_plugins': len([d for d in custom_plugins if d.get('loaded', False)])
+        }
 
 # Import lxml with error handling
 try:
@@ -243,9 +395,9 @@ class ProductManagerXAgent(BaseXAgent):
 
     def __init__(self):
         super().__init__("ProductManagerXAgent")
-        # Use lazy loading registry - no more eager plugin loading!
-        self.domain_registry = LazyDomainRegistry()
-        print("🔌 Lazy Domain Registry initialized")
+        # Use enhanced lazy loading registry with plugin creator
+        self.domain_registry = LazyDomainRegistryWithCreator()
+        print("🔌 Enhanced Lazy Domain Registry with Plugin Creator initialized")
 
     def _process_intelligence(self, parsed_input: etree.Element) -> dict:
         """Extract requirements using domain plugins"""
@@ -264,17 +416,17 @@ class ProductManagerXAgent(BaseXAgent):
         return self._extract_requirements_with_plugins(content, domain)
 
     def _extract_requirements_with_plugins(self, content: str, domain_hint: str = None) -> dict:
-        """Extract requirements using domain plugin system"""
+        """Extract requirements using domain plugin system with auto-creation"""
         
         # First, try to extract explicit REQ-xxx patterns
         requirements = self._extract_explicit_requirements(content)
         
         if not requirements:
-            # Use domain plugin system for intelligent extraction
-            detected_domain, confidence = self.domain_registry.detect_domain(content)
-            domain = domain_hint if domain_hint != "general" else detected_domain
+            # Use enhanced registry to get the handler for the detected domain
+            handler = self.domain_registry.get_handler(domain_hint)
+            newly_created = False
+            cost = 0
             
-            handler = self.domain_registry.get_handler(domain)
             if handler:
                 # Extract domain-specific requirements
                 requirements = handler.extract_requirements(content)
@@ -282,12 +434,23 @@ class ProductManagerXAgent(BaseXAgent):
                 requirements.extend(handler.get_cross_cutting_requirements(content))
                 # Get stakeholders
                 stakeholders = handler.extract_stakeholders(content)
+                
+                # Log if we created a new plugin
+                if newly_created:
+                    logger.info(f"🆕 Created and used new plugin: {domain} (Cost: ${cost})")
+                    
             else:
                 # Fallback to generic requirements
                 requirements = self._extract_generic_requirements()
                 stakeholders = ['End Users', 'Development Team']
+                domain = 'general'
+                newly_created = False
+                cost = 0
         else:
             stakeholders = self._detect_basic_stakeholders(content)
+            domain = domain_hint or 'general'
+            newly_created = False
+            cost = 0
 
         # Format requirements with IDs
         formatted_requirements = self._format_requirements(requirements)
@@ -302,7 +465,9 @@ class ProductManagerXAgent(BaseXAgent):
             'req_count': len(formatted_requirements),
             'feedback_applied': False,
             'person_name': person_info.get('person'),
-            'company_name': person_info.get('company')
+            'company_name': person_info.get('company'),
+            'plugin_created': newly_created,
+            'plugin_cost': cost
         }
 
     def _extract_explicit_requirements(self, content: str) -> list:
@@ -310,9 +475,11 @@ class ProductManagerXAgent(BaseXAgent):
         requirements = []
         req_pattern = r'REQ-(\d+)[:\s]+(.*?)(?=\n|REQ-|\Z)'
         for match in re.finditer(req_pattern, content, re.DOTALL):
+            extracted_title = match.group(2).strip()
+            logger.debug(f"[Product Manager] Extracted explicit requirement title: {extracted_title}")
             requirements.append({
-                'title': match.group(2).strip()[:100],
-                'priority': 'high' if any(word in match.group(2).lower() for word in ['critical', 'must', 'essential', 'required']) else 'medium',
+                'title': extracted_title[:100],
+                'priority': 'high' if any(word in extracted_title.lower() for word in ['critical', 'must', 'essential', 'required']) else 'medium',
                 'category': 'functional'
             })
         return requirements
@@ -452,7 +619,7 @@ class TaskManagerXAgent(BaseXAgent):
         # Generate tasks for each requirement
         for req in requirements:
             req_id = req.get('id')
-            req_title = req.text
+            req_title = req.get('title', req.get('text', 'Requirement'))
             req_priority = req.get('priority', 'medium')
 
             # Standard task patterns per requirement
@@ -976,84 +1143,25 @@ class XAgentPipeline:
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
-# Initialize pipeline with plugin system
+# Initialize pipeline with lazy plugin loading
 try:
-    print("🔄 Initializing X-Agent Pipeline...")
-    print("🔍 Checking critical dependencies first...")
+    print("🔄 Initializing X-Agent Pipeline with Lazy Plugin Loading...")
+    pipeline = XAgentPipeline()
     
-    # Test imports that might be failing
-    try:
-        from domain_plugins.registry import DomainRegistry, DomainPluginLoader
-        print("✅ Domain plugins import successful")
-    except Exception as import_e:
-        print(f"❌ Domain plugins import failed: {import_e}")
-        print("🔄 Creating minimal pipeline without domain plugins...")
-        
-        # Create a minimal pipeline class without domain dependencies
-        class MinimalXAgentPipeline:
-            def __init__(self):
-                self.analyst = AnalystXAgent()
-                # Create minimal PM without domain plugins
-                self.product_manager = ProductManagerXAgent()
-                self.task_manager = TaskManagerXAgent()
-                self.scrum_master = POScrumMasterXAgent()
-                self.max_iterations = 3
-                
-                # Override PM to not use domain registry
-                original_extract = self.product_manager._extract_requirements_with_plugins
-                def safe_extract(content, domain_hint=None):
-                    try:
-                        return original_extract(content, domain_hint)
-                    except:
-                        return {
-                            'domain': 'general',
-                            'requirements': [
-                                {'title': 'Core System Architecture', 'priority': 'high', 'category': 'functional'},
-                                {'title': 'User Interface Implementation', 'priority': 'high', 'category': 'functional'},
-                                {'title': 'API Development Framework', 'priority': 'medium', 'category': 'functional'}
-                            ],
-                            'stakeholders': ['End Users', 'Development Team'],
-                            'req_count': 3,
-                            'feedback_applied': False,
-                            'person_name': None,
-                            'company_name': None
-                        }
-                self.product_manager._extract_requirements_with_plugins = safe_extract
-            
-            def execute(self, document_content):
-                # Use the same execute method as XAgentPipeline
-                return XAgentPipeline.execute(self, document_content)
-                
-            def _escape_xml_content(self, content):
-                return XAgentPipeline._escape_xml_content(self, content)
-                
-            def _create_feedback_xml(self, feedback, original_analysis):
-                return XAgentPipeline._create_feedback_xml(self, feedback, original_analysis)
-                
-            def _create_complete_result(self, analysis_xml, pm_xml, task_xml, approval_xml, iterations, status):
-                return XAgentPipeline._create_complete_result(self, analysis_xml, pm_xml, task_xml, approval_xml, iterations, status)
-        
-        pipeline = MinimalXAgentPipeline()
-        print("✅ Minimal pipeline created successfully")
-        
-    else:
-        # Normal initialization with lazy plugin loading
-        pipeline = XAgentPipeline()
-        
-        # Quick scan without loading plugins
-        available_count = pipeline.product_manager.domain_registry.get_available_count()
-        loaded_count = pipeline.product_manager.domain_registry.get_loaded_count()
-        
-        print(f"🔌 Domain Plugin System Initialized (Lazy Loading)")
-        print(f"📦 Available domains: {available_count} (loaded: {loaded_count})")
-        print(f"🚀 Startup complete - plugins load on-demand!")
-        
+    # Get plugin statistics
+    available_count = pipeline.product_manager.domain_registry.get_available_count()
+    loaded_count = pipeline.product_manager.domain_registry.get_loaded_count()
+    
+    print(f"🔌 Domain Plugin System Initialized (Lazy Loading)")
+    print(f"📦 Available domains: {available_count} (loaded: {loaded_count})")
+    print(f"🚀 Startup complete - plugins load on-demand!")
+    
 except Exception as e:
-    print(f"❌ CRITICAL: Failed to initialize any pipeline: {e}")
+    print(f"❌ CRITICAL: Failed to initialize pipeline: {e}")
     import traceback
     traceback.print_exc()
     
-    # Create absolute minimal pipeline as last resort
+    # Create emergency fallback
     class EmergencyPipeline:
         def execute(self, content):
             return {
@@ -1061,6 +1169,10 @@ except Exception as e:
                 'status': 'Pipeline initialization failed - check console for details',
                 'final_output': f'<ErrorResult>Pipeline failed to initialize: {str(e)}</ErrorResult>'
             }
+        def format_document(self, content):
+            return {'success': False, 'error': 'Pipeline not available'}
+        def execute_with_formatted_input(self, content):
+            return self.execute(content)
     
     pipeline = EmergencyPipeline()
     print("🚨 Emergency pipeline created - basic functionality only")
@@ -1420,14 +1532,11 @@ def create_domain_plugin():
         
         elif 'plugin_spec' in data:
             # Create actual plugin
-            result = creator.create_domain_plugin(data['plugin_spec'])
+            result = asyncio.run(creator.create_domain_plugin(data['plugin_spec']))
             
             if result['success']:
                 # Reload domain registry to include new plugin
-                pipeline.product_manager.domain_registry = DomainRegistry()
-                from domain_plugins.registry import DomainPluginLoader
-                loader = DomainPluginLoader()
-                loader.load_plugins(pipeline.product_manager.domain_registry)
+                pipeline.product_manager.domain_registry.rescan_plugins()
                 
                 return jsonify({
                     "success": True,
@@ -1506,13 +1615,139 @@ def health_check():
     """Health check endpoint"""
     return jsonify({"status": "healthy", "service": "X-Agents Backend with Feedback Loop"}), 200
 
+@app.route('/api/plugin-creation-cost', methods=['POST'])
+def estimate_plugin_creation_cost():
+    """Estimate cost for creating custom plugin"""
+    try:
+        data = request.get_json()
+        content = data.get('content', '')
+        
+        if not content:
+            return jsonify({"error": "No content provided"}), 400
+        
+        # Quick analysis for cost estimation using the registry
+        registry = pipeline.product_manager.domain_registry
+        estimated_cost = registry._estimate_plugin_cost(content, {'complexity_score': 0.5})
+        
+        # Analysis factors for transparency
+        complexity_factors = {
+            'word_count': len(content.split()),
+            'estimated_complexity': 0.5,
+            'base_cost': 50,
+            'total_cost': estimated_cost
+        }
+        
+        return jsonify({
+            "estimated_cost": f"${estimated_cost}",
+            "complexity_analysis": complexity_factors,
+            "cost_breakdown": {
+                "base_fee": "$50 (plugin creation)",
+                "complexity_fee": f"${estimated_cost - 50} (based on content complexity)",
+                "total": f"${estimated_cost}"
+            },
+            "includes": [
+                "Custom domain plugin creation",
+                "Integration with existing system", 
+                "Quality validation and testing",
+                "Lifetime usage rights"
+            ],
+            "note": "Cost is charged only when plugin is successfully created and used"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Plugin cost estimation error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/plugin-stats', methods=['GET'])
+def get_plugin_stats():
+    """Get plugin loading and creation statistics"""
+    try:
+        registry = pipeline.product_manager.domain_registry
+        stats = registry.get_custom_plugin_stats()
+        
+        return jsonify({
+            "success": True,
+            "available_domains": registry.get_available_count(),
+            "loaded_domains": registry.get_loaded_count(),
+            "custom_plugins_created": stats['total_custom_plugins'],
+            "total_revenue": f"${stats['total_revenue']:.2f}",
+            "loaded_custom_plugins": stats['loaded_custom_plugins'],
+            "domains": registry.list_domains()
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Plugin stats error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/custom-plugins', methods=['GET'])
+def list_custom_plugins():
+    """List all custom-created plugins"""
+    try:
+        registry = pipeline.product_manager.domain_registry
+        custom_plugins = []
+        
+        for domain_name, plugin_info in registry.available_domains.items():
+            if plugin_info.get('custom_created', False):
+                custom_plugins.append({
+                    'domain_name': domain_name,
+                    'creation_cost': plugin_info.get('creation_cost', 0),
+                    'created_timestamp': plugin_info.get('created_timestamp', 0),
+                    'loaded': plugin_info.get('loaded', False),
+                    'file_path': plugin_info.get('file_path', '')
+                })
+        
+        return jsonify({
+            "success": True,
+            "custom_plugins": custom_plugins,
+            "total_count": len(custom_plugins),
+            "total_revenue": sum(p['creation_cost'] for p in custom_plugins)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Custom plugins listing error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test-plugin-creation', methods=['POST'])
+def test_plugin_creation():
+    """Test endpoint to trigger plugin creation for unknown domains"""
+    try:
+        data = request.get_json()
+        content = data.get('content', '')
+        force_creation = data.get('force_creation', False)
+        
+        if not content:
+            return jsonify({"error": "No content provided"}), 400
+        
+        # Test the plugin creation workflow
+        registry = pipeline.product_manager.domain_registry
+        
+        if force_creation:
+            # Force creation even if existing plugin might work
+            handler, domain, newly_created, cost = registry._create_custom_plugin(content)
+        else:
+            # Normal workflow - only create if no suitable plugin exists
+            handler, domain, newly_created, cost = registry.get_handler_or_create(content)
+        
+        return jsonify({
+            "success": True,
+            "domain": domain,
+            "plugin_created": newly_created,
+            "creation_cost": cost,
+            "handler_available": handler is not None,
+            "message": f"{'Created new plugin' if newly_created else 'Used existing plugin'} for domain: {domain}"
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Plugin creation test error: {e}")
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
     import sys
     import traceback
     
     try:
         print("🚀 Starting X-Agent Backend Server with Feedback Loop...")
-        print("📡 API available at http://0.0.0.0:5000")
+        print("📡 API available at http://0.0.0.0:5002")
         print("🔍 DEBUG: Python process started successfully")
         
         # Force output flush for parallel mode visibility
@@ -1593,7 +1828,7 @@ if __name__ == "__main__":
             print("🚀 Starting Flask with debug output...")
             app.run(
                 host='0.0.0.0', 
-                port=5000, 
+                port=5002, 
                 debug=False, 
                 threaded=True, 
                 use_reloader=False,
@@ -1629,7 +1864,7 @@ if __name__ == "__main__":
                 subprocess.run(['kill', '-9'] + subprocess.run(['lsof', '-ti:5000'], capture_output=True, text=True).stdout.split(), check=False)
                 time.sleep(2)
                 print("🔄 Retrying Flask server startup...")
-                app.run(host='0.0.0.0', port=5000, debug=False, threaded=True, use_reloader=False)
+                app.run(host='0.0.0.0', port=5002, debug=False, threaded=True, use_reloader=False)
             except Exception as retry_e:
                 print(f"❌ Failed to restart: {retry_e}")
                 print("💡 Try manually stopping the workflow and restarting it")

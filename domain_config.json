@@ -1,0 +1,12 @@
+{
+    "real_estate": ["property", "listing", "mls", "realtor", "lease", "tenant", "rental"],
+    "customer_support": ["ticket", "helpdesk", "agent", "escalation", "support"],
+    "healthcare": ["patient", "medical", "diagnosis", "treatment", "clinical"],
+    "fintech": ["payment", "transaction", "banking", "financial", "compliance"],
+    "ecommerce": ["product", "cart", "checkout", "inventory", "order"],
+    "mobile_app": ["mobile", "app", "android", "ios", "push notification"],
+    "education_management_handler": ["student", "progress", "custom content", "gamification", "parent", "teacher", "education", "learning", "k-12", "dashboard"],
+    "beekeeping": ["hive", "honey", "bees", "apiary", "colony", "queen", "pollen", "nectar", "swarm"],
+    "restaurant_management": ["restaurant", "menu", "orders", "kitchen", "waitstaff", "pos", "reservations", "tables", "dining", "food"],
+    "gaming_studio_management": ["game", "gaming", "multiplayer", "players", "unity", "unreal", "esports", "battle royale", "game development", "game engine", "player progression", "anti-cheat", "microtransaction"]
+}

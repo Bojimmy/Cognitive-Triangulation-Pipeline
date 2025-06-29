@@ -6,16 +6,18 @@ Formats documents to match system requirements and adds valid keywords
 """
 
 import re
-from typing import Dict, List, Any, Optional
+import json
+from typing import Dict, List, Any, Optional, Tuple
 from abc import ABC
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
 class DocumentFormatterXAgent:
     """Formats documents to system standards with valid keywords"""
     
-    def __init__(self):
+    def __init__(self, config_path='domain_config.json'):
         self.agent_type = "DocumentFormatterXAgent"
         self.keyword_patterns = {
             'requirements': r'REQ-(\d+)[:\s]+(.*?)(?=\n|REQ-|\Z)',
@@ -23,17 +25,20 @@ class DocumentFormatterXAgent:
             'constraints': r'(?:constraint|limitation|restriction)[s]?[:\s]+(.*?)(?=\n|\Z)',
             'objectives': r'(?:objective|goal|purpose)[s]?[:\s]+(.*?)(?=\n|\Z)'
         }
-        
-        # Domain-specific keyword mappings
-        self.domain_keywords = {
-            'real_estate': ['property', 'listing', 'mls', 'realtor', 'lease', 'tenant', 'rental'],
-            'customer_support': ['ticket', 'helpdesk', 'agent', 'escalation', 'support'],
-            'healthcare': ['patient', 'medical', 'diagnosis', 'treatment', 'clinical'],
-            'fintech': ['payment', 'transaction', 'banking', 'financial', 'compliance'],
-            'ecommerce': ['product', 'cart', 'checkout', 'inventory', 'order'],
-            'mobile_app': ['mobile', 'app', 'android', 'ios', 'push notification']
-        }
+        self.domain_keywords = self._load_domain_keywords(config_path)
     
+    def _load_domain_keywords(self, config_path: str) -> Dict[str, List[str]]:
+        """Loads domain keywords from a JSON configuration file."""
+        if not os.path.exists(config_path):
+            logger.warning(f"Domain config file not found at {config_path}. Using empty keywords.")
+            return {}
+        try:
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logger.error(f"Error loading domain keywords from {config_path}: {e}")
+            return {}
+
     def format_document(self, raw_content: str, target_domain: str = None) -> Dict[str, Any]:
         """Format document to system standards"""
         logger.info(f"[Document Formatter] Processing document for domain: {target_domain}")
@@ -42,9 +47,12 @@ class DocumentFormatterXAgent:
         cleaned_content = self._clean_content(raw_content)
         
         # Auto-detect domain if not provided
-        detected_domain = target_domain
-        if not detected_domain:
-            detected_domain = self._auto_detect_domain(cleaned_content)
+        domain_confidence = 0.0
+        if target_domain:
+            detected_domain = target_domain
+            domain_confidence = 1.0  # Assume 100% confidence if domain is provided
+        else:
+            detected_domain, domain_confidence = self._auto_detect_domain(cleaned_content)
         
         # Extract structured components
         components = self._extract_components(cleaned_content)
@@ -69,6 +77,7 @@ class DocumentFormatterXAgent:
             'formatted_content': formatted_doc,
             'extracted_requirements': formatted_requirements,
             'identified_domain': detected_domain,
+            'domain_confidence': domain_confidence,
             'stakeholders': components['stakeholders'],
             'validation_score': self._calculate_validation_score(formatted_doc),
             'needs_plugin': components.get('needs_plugin', False),
@@ -236,21 +245,28 @@ class DocumentFormatterXAgent:
         
         return '\n'.join(doc_parts)
     
-    def _auto_detect_domain(self, content: str) -> str:
-        """Auto-detect domain from content"""
+    def _auto_detect_domain(self, content: str) -> Tuple[str, float]:
+        """Auto-detect domain from content and return domain and confidence score."""
         content_lower = content.lower()
         
-        # Score each domain
         best_domain = 'general'
         best_score = 0
         
+        if not self.domain_keywords:
+            return 'general', 0.0
+
         for domain, keywords in self.domain_keywords.items():
             score = sum(1 for keyword in keywords if keyword in content_lower)
             if score > best_score:
                 best_score = score
                 best_domain = domain
         
-        return best_domain if best_score > 0 else 'general'
+        # Normalize the confidence score. This is a simple normalization.
+        # A more sophisticated approach could be used if needed.
+        # Here, we assume that matching 3 or more keywords is high confidence.
+        confidence = min(best_score / 3.0, 1.0)
+        
+        return (best_domain, confidence) if best_score > 0 else ('general', 0.0)
     
     def _extract_potential_keywords(self, content: str) -> List[str]:
         """Extract potential keywords for unknown domains"""
